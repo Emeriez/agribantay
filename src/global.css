@@ -1,0 +1,37 @@
+/* Hide scrollbar for carousel */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Prevent rubber-banding / overscroll */
+
+html, body {
+  overscroll-behavior: none;
+  background: #0f172a; /* Fallback solid color */
+  background: linear-gradient(to bottom right, #0f172a, #1e293b);
+  background-attachment: fixed;
+}
+
+body.light, html.light {
+  background: #e6f9f0;
+  background: linear-gradient(to bottom right, #e6f9f0, #d1fae5 60%, #f0fdf4 100%);
+  background-attachment: fixed;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}
+
+/* No text selection on interactive elements */
+button, a, [role="button"], nav {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}

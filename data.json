@@ -1,0 +1,263 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "admin@example.com",
+      "name": "Admin User",
+      "full_name": "Admin User",
+      "role": "admin"
+    },
+    {
+      "id": 2,
+      "email": "member1@example.com",
+      "name": "Member 1",
+      "full_name": "Member One",
+      "role": "member"
+    },
+    {
+      "id": 3,
+      "email": "member2@example.com",
+      "name": "Member 2",
+      "full_name": "Member Two",
+      "role": "member"
+    },
+    {
+      "id": 4,
+      "email": "member3@example.com",
+      "name": "Member 3",
+      "full_name": "Member Three",
+      "role": "member"
+    }
+  ],
+  "products": [
+    {
+      "id": 1,
+      "name": "Corn Seeds",
+      "quantity": 79,
+      "created_date": "2026-03-01",
+      "category": "Seeds",
+      "unit": "kg",
+      "price_per_unit": 50
+    },
+    {
+      "id": 2,
+      "name": "Wheat Seeds",
+      "quantity": 50,
+      "created_date": "2026-03-02",
+      "category": "Seeds",
+      "unit": "kg",
+      "price_per_unit": 60
+    }
+  ],
+  "events": [
+    {
+      "id": 1,
+      "created_date": "2026-03-07",
+      "title": "JILI ACE SKRRR",
+      "description": "COME JOIN SKRRRRR",
+      "event_date": "2026-11-10T13:30",
+      "location": "DITO KILA FRANCIS",
+      "image_url": "",
+      "author_name": "Admin User",
+      "author_email": "admin@example.com",
+      "status": "upcoming"
+    }
+  ],
+  "loans": [
+    {
+      "id": 1,
+      "member_email": "member1@example.com",
+      "status": "approved",
+      "created_date": "2026-03-01",
+      "product_id": 1,
+      "quantity": 10,
+      "type": "seeds",
+      "pickup_date": "23123-12-31",
+      "deadline": "231231-12-31"
+    },
+    {
+      "id": 2,
+      "member_email": "member2@example.com",
+      "status": "approved",
+      "created_date": "2026-03-02",
+      "product_id": 2,
+      "quantity": 5,
+      "type": "capital"
+    },
+    {
+      "id": 3,
+      "member_email": "member3@example.com",
+      "status": "approved",
+      "created_date": "2026-03-03",
+      "product_id": 1,
+      "quantity": 8,
+      "type": "seeds",
+      "pickup_date": "231231-12-31",
+      "deadline": "23123-12-31"
+    },
+    {
+      "id": 4,
+      "status": "approved",
+      "created_date": "2026-03-07",
+      "member_email": "member3@example.com",
+      "member_name": "Member Three",
+      "type": "seeds",
+      "purpose": "",
+      "product_id": 2,
+      "product_name": "Wheat Seeds",
+      "quantity": 3,
+      "pickup_date": "123123-11-12",
+      "deadline": "231231-12-31"
+    },
+    {
+      "id": 5,
+      "status": "approved",
+      "created_date": "2026-03-07",
+      "member_email": "member3@example.com",
+      "member_name": "Member Three",
+      "type": "capital",
+      "purpose": "",
+      "amount": 1123,
+      "pickup_date": "231231-12-31",
+      "deadline": "123131-12-31"
+    },
+    {
+      "id": 6,
+      "status": "approved",
+      "created_date": "2026-03-07",
+      "member_email": "member1@example.com",
+      "member_name": "Member One",
+      "type": "capital",
+      "purpose": "I need PP pills. this is important for crop growing, trust",
+      "amount": 25000,
+      "pickup_date": "31231-11-10",
+      "deadline": "123121-12-31"
+    },
+    {
+      "id": 7,
+      "status": "approved",
+      "created_date": "2026-03-09",
+      "member_email": "member1@example.com",
+      "member_name": "Member One",
+      "type": "capital",
+      "purpose": "jili scatter",
+      "amount": 300,
+      "pickup_date": "2026-03-10",
+      "deadline": "2026-04-09"
+    }
+  ],
+  "transactions": [
+    {
+      "id": 1,
+      "amount": 100,
+      "created_date": "2026-03-01",
+      "type": "seeds_loan",
+      "member_name": "Member One",
+      "member_email": "member1@example.com",
+      "product_name": "Corn Seeds",
+      "product_id": 1
+    },
+    {
+      "id": 2,
+      "amount": 200,
+      "created_date": "2026-03-02",
+      "type": "capital_loan",
+      "member_name": "Member Two",
+      "member_email": "member2@example.com",
+      "product_name": "Wheat Seeds",
+      "product_id": 2
+    },
+    {
+      "id": 3,
+      "amount": 80,
+      "created_date": "2026-03-03",
+      "type": "seeds_loan",
+      "member_name": "Member Three",
+      "member_email": "member3@example.com",
+      "product_name": "Corn Seeds",
+      "product_id": 1
+    },
+    {
+      "id": 4,
+      "created_date": "2026-03-07",
+      "member_email": "member3@example.com",
+      "member_name": "Member Three",
+      "product_id": 2,
+      "product_name": "Wheat Seeds",
+      "type": "seeds_loan",
+      "quantity": 3,
+      "amount": 0,
+      "deadline": "231231-12-31",
+      "status": "active",
+      "loan_request_id": 4
+    },
+    {
+      "id": 5,
+      "created_date": "2026-03-07",
+      "member_email": "member3@example.com",
+      "product_id": 1,
+      "product_name": "",
+      "type": "seeds_loan",
+      "quantity": 8,
+      "amount": 0,
+      "deadline": "23123-12-31",
+      "status": "active",
+      "loan_request_id": 3
+    },
+    {
+      "id": 6,
+      "created_date": "2026-03-07",
+      "member_email": "member1@example.com",
+      "product_id": 1,
+      "product_name": "",
+      "type": "seeds_loan",
+      "quantity": 10,
+      "amount": 0,
+      "deadline": "231231-12-31",
+      "status": "active",
+      "loan_request_id": 1
+    },
+    {
+      "id": 7,
+      "created_date": "2026-03-07",
+      "member_email": "member3@example.com",
+      "member_name": "Member Three",
+      "product_id": "",
+      "product_name": "",
+      "type": "capital_loan",
+      "quantity": 0,
+      "amount": 1123,
+      "deadline": "123131-12-31",
+      "status": "active",
+      "loan_request_id": 5
+    },
+    {
+      "id": 8,
+      "created_date": "2026-03-07",
+      "member_email": "member1@example.com",
+      "member_name": "Member One",
+      "product_id": "",
+      "product_name": "",
+      "type": "capital_loan",
+      "quantity": 0,
+      "amount": 25000,
+      "deadline": "123121-12-31",
+      "status": "active",
+      "loan_request_id": 6
+    },
+    {
+      "id": 9,
+      "created_date": "2026-03-09",
+      "member_email": "member1@example.com",
+      "member_name": "Member One",
+      "product_id": "",
+      "product_name": "",
+      "type": "capital_loan",
+      "quantity": 0,
+      "amount": 300,
+      "deadline": "2026-04-09",
+      "status": "active",
+      "loan_request_id": 7
+    }
+  ]
+}

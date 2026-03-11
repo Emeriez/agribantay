@@ -1,0 +1,66 @@
+<svg viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @keyframes sprout {
+        0% {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        20% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      @keyframes grow {
+        0% {
+          transform: scaleY(0.3);
+          opacity: 0;
+        }
+        30% {
+          opacity: 1;
+        }
+        100% {
+          transform: scaleY(1);
+          opacity: 1;
+        }
+      }
+      
+      .seedling-stem { animation: grow 2s ease-in-out infinite; }
+      .seedling-leaf-left { animation: grow 2.2s ease-in-out infinite; }
+      .seedling-leaf-right { animation: grow 2.4s ease-in-out infinite; }
+      .seedling-root { animation: sprout 2.6s ease-in-out infinite; }
+    </style>
+  </defs>
+  
+  <!-- White background -->
+  <rect width="1200" height="600" fill="white"/>
+  
+  <!-- AgriBantay text -->
+  <text x="420" y="420" font-family="Arial, sans-serif" font-size="180" font-weight="bold" fill="#00B050">AgriBantay</text>
+  
+  <!-- Seedling illustration with animation -->
+  <g transform="translate(150, 300)">
+    <!-- Soil -->
+    <ellipse cx="0" cy="80" rx="50" ry="15" fill="#8B6F47" opacity="0.6"/>
+    
+    <!-- Root -->
+    <path class="seedling-root" d="M 0 80 Q -15 95 -20 120" stroke="#8B4513" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path class="seedling-root" d="M 0 80 Q 15 95 20 120" stroke="#8B4513" stroke-width="3" fill="none" stroke-linecap="round"/>
+    
+    <!-- Main stem -->
+    <path class="seedling-stem" d="M 0 80 L 0 -20" stroke="#2D5016" stroke-width="4" fill="none" stroke-linecap="round"/>
+    
+    <!-- Left leaf -->
+    <ellipse class="seedling-leaf-left" cx="-18" cy="-5" rx="15" ry="25" fill="#00B050" transform="rotate(-35 -18 -5)"/>
+    
+    <!-- Right leaf -->
+    <ellipse class="seedling-leaf-right" cx="18" cy="-5" rx="15" ry="25" fill="#00B050" transform="rotate(35 18 -5)"/>
+    
+    <!-- Top sprout -->
+    <circle class="seedling-stem" cx="0" cy="-30" r="8" fill="#00D46A"/>
+  </g>
+</svg>
