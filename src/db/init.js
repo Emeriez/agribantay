@@ -11,7 +11,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Create database connection pool
 const poolConfig = process.env.DATABASE_URL 
-  ? { connectionString: process.env.DATABASE_URL }
+  ? { 
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false } // Railway requires SSL
+    }
   : {
       host: process.env.DB_HOST || 'localhost',
       port: process.env.DB_PORT || 5432,
@@ -23,7 +26,8 @@ const poolConfig = process.env.DATABASE_URL
 console.log('📊 Database Config:', {
   usingDatabaseURL: !!process.env.DATABASE_URL,
   host: poolConfig.host || 'from CONNECTION_STRING',
-  port: poolConfig.port || 'from CONNECTION_STRING'
+  port: poolConfig.port || 'from CONNECTION_STRING',
+  databaseUrl: process.env.DATABASE_URL ? '✓ Set' : '✗ Not set'
 });
 
 const pool = new Pool(poolConfig);
