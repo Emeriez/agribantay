@@ -474,6 +474,57 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', database: 'connected' });
 });
 
+// ===== ADMIN: SEED DATABASE (for emergency re-seeding) =====
+app.post('/api/admin/seed', async (req, res) => {
+  try {
+    const pool = getPool();
+    
+    // Clear existing data
+    await pool.query('DELETE FROM users');
+    await pool.query('DELETE FROM products');
+    
+    // Insert demo users
+    const users = [
+      { email: 'admin@example.com', password: 'admin123', name: 'Admin User', full_name: 'Admin User', role: 'admin' },
+      { email: 'member1@example.com', password: 'member123', name: 'Member 1', full_name: 'Member One', role: 'member' },
+      { email: 'member2@example.com', password: 'member123', name: 'Member 2', full_name: 'Member Two', role: 'member' },
+      { email: 'member3@example.com', password: 'member123', name: 'Member 3', full_name: 'Member Three', role: 'member' }
+    ];
+
+    for (const user of users) {
+      await pool.query(
+        'INSERT INTO users (email, password_hash, name, full_name, role) VALUES ($1, $2, $3, $4, $5)',
+        [user.email, user.password, user.name, user.full_name, user.role]
+      );
+    }
+
+    // Insert demo products
+    const products = [
+      { name: 'Corn Seeds', quantity: 100, created_date: '2026-03-01', category: 'Seeds', unit: 'kg', price_per_unit: 50 },
+      { name: 'Wheat Seeds', quantity: 50, created_date: '2026-03-02', category: 'Seeds', unit: 'kg', price_per_unit: 60 }
+    ];
+
+    for (const product of products) {
+      await pool.query(
+        'INSERT INTO products (name, category, quantity, unit, price_per_unit, created_date) VALUES ($1, $2, $3, $4, $5, $6)',
+        [product.name, product.category, product.quantity, product.unit, product.price_per_unit, product.created_date]
+      );
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Database re-seeded successfully',
+      credentials: {
+        admin: { email: 'admin@example.com', password: 'admin123' },
+        member: { email: 'member1@example.com', password: 'member123' }
+      }
+    });
+  } catch (error) {
+    console.error('❌ Seeding error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Serve index.html for all non-API routes (React Router SPA)
 app.get('*', (req, res) => {
   const filePath = path.join(__dirname, '../dist/index.html');
