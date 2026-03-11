@@ -115,10 +115,13 @@ const Layout = memo(function Layout({ children, currentPageName }) {
   const loadLoanNotifications = async (userEmail, userRole) => {
     try {
       if (userRole === 'member') {
-        // For members: show count of actioned loans (approved/declined)
+        // For members: show count of newly actioned loans (not yet seen)
         const loans = await api.entities.LoanRequest.filter({ member_email: userEmail });
-        const actionedLoans = loans.filter((loan) => loan.status !== 'pending');
-        setLoanNotificationCount(actionedLoans.length);
+        const newlyActionedLoans = loans.filter((loan) => {
+          // Show only if: status is approved/declined AND not yet marked as notified
+          return loan.status !== 'pending' && (!loan.member_notified_at);
+        });
+        setLoanNotificationCount(newlyActionedLoans.length);
       } else if (userRole === 'admin' || userRole === 'head_admin') {
         // For admins: show count of pending loans
         const allLoans = await api.entities.LoanRequest.list();

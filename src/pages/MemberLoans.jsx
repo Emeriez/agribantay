@@ -55,6 +55,8 @@ export default function MemberLoans() {
       const me = await api.auth.me();
       setUser(me);
       await loadData(me);
+      // Mark all loans as notified (viewed) so notification badge disappears
+      await api.entities.LoanRequest.markNotified(me.email);
     } catch (error) {
       console.error('Failed to load:', error);
       navigate("/");

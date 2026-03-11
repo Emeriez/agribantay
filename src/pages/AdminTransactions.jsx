@@ -21,6 +21,8 @@ export default function AdminTransactions() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [memberFilter, setMemberFilter] = useState("");
+  const [productFilter, setProductFilter] = useState("");
 
   useEffect(() => {
     checkAuthAndLoad();
@@ -72,8 +74,16 @@ export default function AdminTransactions() {
     const matchSearch =
       search === "" ||
       tx.member_name?.toLowerCase().includes(search.toLowerCase()) ||
-      tx.member_email?.toLowerCase().includes(search.toLowerCase()) ||
-      tx.product_name?.toLowerCase().includes(search.toLowerCase());
+      tx.member_email?.toLowerCase().includes(search.toLowerCase());
+
+    const matchMember = 
+      memberFilter === "" ||
+      tx.member_name?.toLowerCase().includes(memberFilter.toLowerCase()) ||
+      tx.member_email?.toLowerCase().includes(memberFilter.toLowerCase());
+
+    const matchProduct = 
+      productFilter === "" ||
+      tx.product_name?.toLowerCase().includes(productFilter.toLowerCase());
 
     const matchType = typeFilter === "all" || tx.type === typeFilter;
 
@@ -81,8 +91,12 @@ export default function AdminTransactions() {
     const matchFrom = !dateFrom || (txDate && txDate >= new Date(dateFrom));
     const matchTo = !dateTo || (txDate && txDate <= new Date(dateTo + "T23:59:59"));
 
-    return matchSearch && matchType && matchFrom && matchTo;
+    return matchSearch && matchMember && matchProduct && matchType && matchFrom && matchTo;
   });
+
+  // Get unique members and products for filter dropdowns
+  const uniqueMembers = [...new Set(transactions.map(tx => tx.member_name).filter(Boolean))].sort();
+  const uniqueProducts = [...new Set(transactions.map(tx => tx.product_name).filter(Boolean))].sort();
 
   const typeColor = {
     seeds_loan: "bg-emerald-500/30 text-emerald-300",
@@ -101,30 +115,61 @@ export default function AdminTransactions() {
 
         {/* Filters */}
         <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-5 mb-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
-                placeholder="Search member or product..."
+                placeholder="Search email..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10 bg-slate-700 border-slate-600 text-white placeholder-slate-500"
               />
             </div>
+            <Select value={memberFilter} onValueChange={setMemberFilter}>
+              <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                <SelectValue placeholder="Member" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectItem value="">All Members</SelectItem>
+                {uniqueMembers.map((member) => (
+                  <SelectItem key={member} value={member}>
+                    {member}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={productFilter} onValueChange={setProductFilter}>
+              <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                <SelectValue placeholder="Product" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectItem value="">All Products</SelectItem>
+                {uniqueProducts.map((product) => (
+                  <SelectItem key={product} value={product}>
+                    {product}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-slate-700">
                 <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="Loan Approved">Loan Approved</SelectItem>
+                <SelectItem value="Loan Declined">Loan Declined</SelectItem>
+                <SelectItem value="Loan Payment">Loan Payment</SelectItem>
                 <SelectItem value="seeds_loan">Seeds Loan</SelectItem>
                 <SelectItem value="capital_loan">Capital Loan</SelectItem>
                 <SelectItem value="payment">Payment</SelectItem>
                 <SelectItem value="return">Return</SelectItem>
               </SelectContent>
             </Select>
-            <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} placeholder="From" className="bg-slate-700 border-slate-600 text-white" />
-            <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} placeholder="To" className="bg-slate-700 border-slate-600 text-white" />
+            <div className="flex gap-2 flex-col sm:flex-row lg:col-span-2">
+              <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} placeholder="From" className="bg-slate-700 border-slate-600 text-white flex-1" />
+              <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} placeholder="To" className="bg-slate-700 border-slate-600 text-white flex-1" />
+            </div>
           </div>
         </div>
 

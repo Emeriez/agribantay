@@ -336,10 +336,10 @@ app.put('/api/loans/:id', async (req, res) => {
     const currentLoan = await pool.query('SELECT * FROM loans WHERE id = $1', [loanId]);
     const oldStatus = currentLoan.rows[0]?.status;
 
-    // Update the loan
+    // Update the loan (reset member_notified_at when status changes so member sees new notification)
     const result = await pool.query(
-      'UPDATE loans SET status = $1, pickup_date = $2, deadline = $3, decline_reason = $4, paid_amount = COALESCE(paid_amount, 0) + $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6 RETURNING *',
-      [status, pickup_date || null, deadline || null, decline_reason || null, paid_amount || 0, loanId]
+      'UPDATE loans SET status = $1, pickup_date = $2, deadline = $3, decline_reason = $4, paid_amount = COALESCE(paid_amount, 0) + $5, member_notified_at = CASE WHEN $1 IS DISTINCT FROM $6 AND $1 != $6 THEN NULL ELSE member_notified_at END, updated_at = CURRENT_TIMESTAMP WHERE id = $7 RETURNING *',
+      [status, pickup_date || null, deadline || null, decline_reason || null, paid_amount || 0, oldStatus, loanId]
     );
 
     if (result.rows.length === 0) {
@@ -440,6 +440,26 @@ app.post('/api/loans/:id/mark-paid', async (req, res) => {
     res.json(result.rows[0]);
   } catch (error) {
     console.error('❌ Mark loan paid error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Mark member's loans as notified (viewed)
+app.post('/api/loans/mark-notified/:memberEmail', async (req, res) => {
+  try {
+    const memberEmail = req.params.memberEmail;
+    const pool = getPool();
+
+    // Update all this member's loans to mark as notified
+    await pool.query(
+      'UPDATE loans SET member_notified_at = CURRENT_TIMESTAMP WHERE member_email = $1 AND member_notified_at IS NULL',
+      [memberEmail]
+    );
+
+    console.log(`✅ Loans marked as notified for member: ${memberEmail}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('❌ Mark notified error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

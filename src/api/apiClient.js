@@ -278,6 +278,11 @@ export const api = {
           method: 'PUT',
           body: JSON.stringify(data)
         });
+      },
+      markNotified: async (memberEmail) => {
+        return await apiRequest(`/loans/mark-notified/${encodeURIComponent(memberEmail)}`, {
+          method: 'POST'
+        });
       }
     },
     Transaction: {
