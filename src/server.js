@@ -366,39 +366,56 @@ app.put('/api/loans/:id', async (req, res) => {
     
     const oldStatus = currentLoan.rows[0].status;
     
-    // Use straightforward update - avoid complex type coercion
-    // Only process fields that are explicitly provided
-    const updateData = {
-      status: status !== undefined ? status : oldStatus,
-      pickup_date: pickup_date || null,
-      deadline: deadline || null,
-      decline_reason: decline_reason || null,
-      paid_amount: paid_amount && paid_amount > 0 ? (parseFloat(currentLoan.rows[0].paid_amount || 0) + parseFloat(paid_amount)) : (currentLoan.rows[0].paid_amount || 0),
-      member_notified_at: (status !== undefined && status !== oldStatus) ? null : currentLoan.rows[0].member_notified_at,
-      updated_at: 'CURRENT_TIMESTAMP'
-    };
+    // Build query dynamically with only provided fields to avoid type coercion issues
+    const updateFields = ['updated_at = CURRENT_TIMESTAMP'];
+    const updateParams = [];
+    let paramIndex = 1;
 
-    // Simple straightforward update query - no CASE WHEN, no complex coercion
+    if (status !== undefined) {
+      updateFields.push(`status = $${paramIndex}`);
+      updateParams.push(status);
+      paramIndex++;
+    }
+
+    if (pickup_date !== undefined && pickup_date !== null) {
+      updateFields.push(`pickup_date = $${paramIndex}`);
+      updateParams.push(pickup_date);
+      paramIndex++;
+    }
+
+    if (deadline !== undefined && deadline !== null) {
+      updateFields.push(`deadline = $${paramIndex}`);
+      updateParams.push(deadline);
+      paramIndex++;
+    }
+
+    if (decline_reason !== undefined && decline_reason !== null) {
+      updateFields.push(`decline_reason = $${paramIndex}`);
+      updateParams.push(decline_reason);
+      paramIndex++;
+    }
+
+    if (paid_amount !== undefined && paid_amount > 0) {
+      const newPaidAmount = parseFloat(currentLoan.rows[0].paid_amount || 0) + parseFloat(paid_amount);
+      updateFields.push(`paid_amount = $${paramIndex}`);
+      updateParams.push(newPaidAmount);
+      paramIndex++;
+    }
+
+    // Handle member_notified_at: set to NULL if status is changing, otherwise keep as is
+    if (status !== undefined && status !== oldStatus) {
+      updateFields.push(`member_notified_at = NULL`);
+    }
+
+    // Add the loan ID as the last parameter
+    updateParams.push(loanId);
+
     const result = await pool.query(
       `UPDATE loans 
-       SET status = $1, 
-           pickup_date = $2, 
-           deadline = $3, 
-           decline_reason = $4, 
-           paid_amount = $5, 
-           member_notified_at = $6,
-           updated_at = CURRENT_TIMESTAMP 
-       WHERE id = $7 
+       SET ${updateFields.join(', ')}
+       WHERE id = $${paramIndex}
        RETURNING *`,
-      [
-        updateData.status,
-        updateData.pickup_date,
-        updateData.deadline,
-        updateData.decline_reason,
-        updateData.paid_amount,
-        updateData.member_notified_at,
-        loanId
-      ]
+      updateParams
     );
 
     if (result.rows.length === 0) {
