@@ -16,18 +16,26 @@ const poolConfig = process.env.DATABASE_URL
       ssl: { rejectUnauthorized: false } // Railway requires SSL
     }
   : {
-      host: process.env.DB_HOST || 'localhost',
-      port: process.env.DB_PORT || 5432,
-      database: process.env.DB_NAME || 'agribantay',
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
+      // Try to use Railway PostgreSQL variables
+      host: process.env.PGHOST || process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.PGPORT || process.env.DB_PORT || '5432'),
+      database: process.env.PGDATABASE || process.env.DB_NAME || 'agribantay',
+      user: process.env.PGUSER || process.env.DB_USER || 'postgres',
+      password: process.env.PGPASSWORD || process.env.DB_PASSWORD || 'postgres',
+      ssl: { rejectUnauthorized: false } // Railway requires SSL
     };
 
 console.log('📊 Database Config:', {
   usingDatabaseURL: !!process.env.DATABASE_URL,
-  host: poolConfig.host || 'from CONNECTION_STRING',
-  port: poolConfig.port || 'from CONNECTION_STRING',
-  databaseUrl: process.env.DATABASE_URL ? '✓ Set' : '✗ Not set'
+  host: poolConfig.host,
+  port: poolConfig.port,
+  database: poolConfig.database,
+  user: poolConfig.user,
+  pgHostSet: !!process.env.PGHOST,
+  pgPortSet: !!process.env.PGPORT,
+  pgDatabaseSet: !!process.env.PGDATABASE,
+  pgUserSet: !!process.env.PGUSER,
+  pgPasswordSet: !!process.env.PGPASSWORD
 });
 
 const pool = new Pool(poolConfig);
