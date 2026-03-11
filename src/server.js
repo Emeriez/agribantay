@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { initializeDatabase, getPool } from './db/init.js';
 
@@ -475,7 +476,12 @@ app.get('/api/health', (req, res) => {
 
 // Serve index.html for all non-API routes (React Router SPA)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist/index.html'));
+  const filePath = path.join(__dirname, '../dist/index.html');
+  if (fs.existsSync(filePath)) {
+    res.sendFile(filePath);
+  } else {
+    res.status(404).json({ error: 'Frontend not built. Build the frontend with "npm run build"' });
+  }
 });
 
 app.listen(PORT, '0.0.0.0', () => {
