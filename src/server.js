@@ -367,41 +367,44 @@ app.put('/api/loans/:id', async (req, res) => {
     const oldStatus = currentLoan.rows[0].status;
     
     // Build query dynamically with only provided fields to avoid type coercion issues
-    const updates = [];
+    const updates = ['updated_at = CURRENT_TIMESTAMP'];
     const values = [];
-
-    // Always update the timestamp
-    updates.push('updated_at = CURRENT_TIMESTAMP');
+    let paramIndex = 1;  // Track parameter index based on values array, not updates array
 
     // Add status if provided
     if (status !== undefined) {
-      updates.push(`status = $${updates.length + 1}`);
+      updates.push(`status = $${paramIndex}`);
       values.push(status);
+      paramIndex++;
     }
 
     // Add pickup_date if provided and not null
     if (pickup_date !== undefined && pickup_date !== null) {
-      updates.push(`pickup_date = $${updates.length + 1}`);
+      updates.push(`pickup_date = $${paramIndex}`);
       values.push(pickup_date);
+      paramIndex++;
     }
 
     // Add deadline if provided and not null
     if (deadline !== undefined && deadline !== null) {
-      updates.push(`deadline = $${updates.length + 1}`);
+      updates.push(`deadline = $${paramIndex}`);
       values.push(deadline);
+      paramIndex++;
     }
 
     // Add decline_reason if provided and not null
     if (decline_reason !== undefined && decline_reason !== null) {
-      updates.push(`decline_reason = $${updates.length + 1}`);
+      updates.push(`decline_reason = $${paramIndex}`);
       values.push(decline_reason);
+      paramIndex++;
     }
 
     // Add paid_amount if provided and greater than 0
     if (paid_amount !== undefined && paid_amount > 0) {
       const newPaidAmount = parseFloat(currentLoan.rows[0].paid_amount || 0) + parseFloat(paid_amount);
-      updates.push(`paid_amount = $${updates.length + 1}`);
+      updates.push(`paid_amount = $${paramIndex}`);
       values.push(newPaidAmount);
+      paramIndex++;
     }
 
     // Reset member_notified_at if status is changing
@@ -411,11 +414,10 @@ app.put('/api/loans/:id', async (req, res) => {
 
     // Add loan ID as final parameter
     values.push(loanId);
-    const idParamIndex = values.length;
 
     const query = `UPDATE loans 
        SET ${updates.join(', ')}
-       WHERE id = $${idParamIndex}
+       WHERE id = $${paramIndex}
        RETURNING *`;
 
     const result = await pool.query(query, values);
