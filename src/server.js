@@ -1,16 +1,22 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { initializeDatabase, getPool } from './db/init.js';
 
 dotenv.config();
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from Vite build (dist folder)
+app.use(express.static(path.join(__dirname, '../dist')));
 
 // Initialize database on startup
 await initializeDatabase();
@@ -465,6 +471,11 @@ app.get('/api/diagnostic/users', async (req, res) => {
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', database: 'connected' });
+});
+
+// Serve index.html for all non-API routes (React Router SPA)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
 app.listen(PORT, '0.0.0.0', () => {
