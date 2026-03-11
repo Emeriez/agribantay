@@ -367,56 +367,58 @@ app.put('/api/loans/:id', async (req, res) => {
     const oldStatus = currentLoan.rows[0].status;
     
     // Build query dynamically with only provided fields to avoid type coercion issues
-    const updateFields = ['updated_at = CURRENT_TIMESTAMP'];
-    const updateParams = [];
-    let paramIndex = 1;
+    const updates = [];
+    const values = [];
 
+    // Always update the timestamp
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+
+    // Add status if provided
     if (status !== undefined) {
-      updateFields.push(`status = $${paramIndex}`);
-      updateParams.push(status);
-      paramIndex++;
+      updates.push(`status = $${updates.length + 1}`);
+      values.push(status);
     }
 
+    // Add pickup_date if provided and not null
     if (pickup_date !== undefined && pickup_date !== null) {
-      updateFields.push(`pickup_date = $${paramIndex}`);
-      updateParams.push(pickup_date);
-      paramIndex++;
+      updates.push(`pickup_date = $${updates.length + 1}`);
+      values.push(pickup_date);
     }
 
+    // Add deadline if provided and not null
     if (deadline !== undefined && deadline !== null) {
-      updateFields.push(`deadline = $${paramIndex}`);
-      updateParams.push(deadline);
-      paramIndex++;
+      updates.push(`deadline = $${updates.length + 1}`);
+      values.push(deadline);
     }
 
+    // Add decline_reason if provided and not null
     if (decline_reason !== undefined && decline_reason !== null) {
-      updateFields.push(`decline_reason = $${paramIndex}`);
-      updateParams.push(decline_reason);
-      paramIndex++;
+      updates.push(`decline_reason = $${updates.length + 1}`);
+      values.push(decline_reason);
     }
 
+    // Add paid_amount if provided and greater than 0
     if (paid_amount !== undefined && paid_amount > 0) {
       const newPaidAmount = parseFloat(currentLoan.rows[0].paid_amount || 0) + parseFloat(paid_amount);
-      updateFields.push(`paid_amount = $${paramIndex}`);
-      updateParams.push(newPaidAmount);
-      paramIndex++;
+      updates.push(`paid_amount = $${updates.length + 1}`);
+      values.push(newPaidAmount);
     }
 
-    // Handle member_notified_at: set to NULL if status is changing, otherwise keep as is
+    // Reset member_notified_at if status is changing
     if (status !== undefined && status !== oldStatus) {
-      updateFields.push(`member_notified_at = NULL`);
+      updates.push(`member_notified_at = NULL`);
     }
 
-    // Add the loan ID as the last parameter
-    updateParams.push(loanId);
+    // Add loan ID as final parameter
+    values.push(loanId);
+    const idParamIndex = values.length;
 
-    const result = await pool.query(
-      `UPDATE loans 
-       SET ${updateFields.join(', ')}
-       WHERE id = $${paramIndex}
-       RETURNING *`,
-      updateParams
-    );
+    const query = `UPDATE loans 
+       SET ${updates.join(', ')}
+       WHERE id = $${idParamIndex}
+       RETURNING *`;
+
+    const result = await pool.query(query, values);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Loan not found' });
