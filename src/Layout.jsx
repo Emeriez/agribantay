@@ -98,13 +98,33 @@ const Layout = memo(function Layout({ children, currentPageName }) {
     localStorage.setItem('agribantay_mode', mode);
   }, [mode]);
 
+  // Clear loan notifications when viewing loan pages
+  useEffect(() => {
+    const currentPage = location.pathname.substring(1) || currentPageName;
+    if (currentPage === 'MemberLoans' || currentPage === 'AdminLoanRequests') {
+      setLoanNotificationCount(0);
+    }
+  }, [location.pathname, currentPageName]);
+
   const toggleMode = () => setMode((m) => (m === 'dark' ? 'light' : 'dark'));
 
-  const loadLoanNotifications = async (userEmail) => {
+  const clearLoanNotifications = () => {
+    setLoanNotificationCount(0);
+  };
+
+  const loadLoanNotifications = async (userEmail, userRole) => {
     try {
-      const loans = await api.entities.LoanRequest.filter({ member_email: userEmail });
-      const actionedLoans = loans.filter((loan) => loan.status !== 'pending');
-      setLoanNotificationCount(actionedLoans.length);
+      if (userRole === 'member') {
+        // For members: show count of actioned loans (approved/declined)
+        const loans = await api.entities.LoanRequest.filter({ member_email: userEmail });
+        const actionedLoans = loans.filter((loan) => loan.status !== 'pending');
+        setLoanNotificationCount(actionedLoans.length);
+      } else if (userRole === 'admin' || userRole === 'head_admin') {
+        // For admins: show count of pending loans
+        const allLoans = await api.entities.LoanRequest.list();
+        const pendingLoans = allLoans.filter((loan) => loan.status === 'pending');
+        setLoanNotificationCount(pendingLoans.length);
+      }
     } catch (error) {
       console.error('Error loading loan notifications:', error);
     }
@@ -120,10 +140,8 @@ const Layout = memo(function Layout({ children, currentPageName }) {
     console.log('👤 Layout loaded user:', me);
     setUser(me);
     
-    // Load loan notifications for members
-    if (me.role === 'member') {
-      await loadLoanNotifications(me.email);
-    }
+    // Load loan notifications
+    await loadLoanNotifications(me.email, me.role);
     
     setLoading(false);
   };
@@ -225,7 +243,7 @@ const Layout = memo(function Layout({ children, currentPageName }) {
         <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
           {links.map((link) => {
             const isActive = currentPage === link.page;
-            const isLoanLink = link.page === "MemberLoans" && loanNotificationCount > 0;
+            const hasLoanNotification = (link.page === "MemberLoans" || link.page === "AdminLoanRequests") && loanNotificationCount > 0;
             return (
               <Link
                 key={link.page}
@@ -245,7 +263,7 @@ const Layout = memo(function Layout({ children, currentPageName }) {
                 <span className={`transition-all duration-300 whitespace-nowrap ${sidebarExpanded ? "opacity-100" : "opacity-0 hidden"}`}>
                   {link.name}
                 </span>
-                {isLoanLink && (
+                {hasLoanNotification && (
                   <div className={`absolute ${sidebarExpanded ? "right-3" : "top-1 right-1"} bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse`}>
                     {loanNotificationCount}
                   </div>
@@ -312,7 +330,7 @@ const Layout = memo(function Layout({ children, currentPageName }) {
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {links.map((link) => {
             const isActive = currentPage === link.page;
-            const isLoanLink = link.page === "MemberLoans" && loanNotificationCount > 0;
+            const hasLoanNotification = (link.page === "MemberLoans" || link.page === "AdminLoanRequests") && loanNotificationCount > 0;
             return (
               <Link
                 key={link.page}
@@ -329,7 +347,7 @@ const Layout = memo(function Layout({ children, currentPageName }) {
                   isActive ? "text-white" : "text-teal-200 group-hover/link:text-teal-300"
                 }`} />
                 <span>{link.name}</span>
-                {isLoanLink && (
+                {hasLoanNotification && (
                   <div className="absolute right-3 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
                     {loanNotificationCount}
                   </div>
@@ -419,7 +437,7 @@ const Layout = memo(function Layout({ children, currentPageName }) {
         >
           {tabLinks.map((link) => {
             const isActive = currentPage === link.page;
-            const isLoanLink = link.page === "MemberLoans" && loanNotificationCount > 0;
+            const hasLoanNotification = (link.page === "MemberLoans" || link.page === "AdminLoanRequests") && loanNotificationCount > 0;
             return (
               <Link
                 key={link.page}
@@ -431,7 +449,7 @@ const Layout = memo(function Layout({ children, currentPageName }) {
               >
                 <div className="relative">
                   <link.icon className={`w-6 h-6 transition-all duration-200 ${isActive ? 'scale-110' : ''}`} />
-                  {isLoanLink && (
+                  {hasLoanNotification && (
                     <div className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center animate-pulse">
                       {loanNotificationCount}
                     </div>
