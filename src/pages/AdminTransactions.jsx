@@ -21,8 +21,8 @@ export default function AdminTransactions() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [memberFilter, setMemberFilter] = useState("");
-  const [productFilter, setProductFilter] = useState("");
+  const [memberFilter, setMemberFilter] = useState("all");
+  const [productFilter, setProductFilter] = useState("all");
 
   useEffect(() => {
     checkAuthAndLoad();
@@ -77,12 +77,12 @@ export default function AdminTransactions() {
       tx.member_email?.toLowerCase().includes(search.toLowerCase());
 
     const matchMember = 
-      memberFilter === "" ||
+      memberFilter === "all" ||
       tx.member_name?.toLowerCase().includes(memberFilter.toLowerCase()) ||
       tx.member_email?.toLowerCase().includes(memberFilter.toLowerCase());
 
     const matchProduct = 
-      productFilter === "" ||
+      productFilter === "all" ||
       tx.product_name?.toLowerCase().includes(productFilter.toLowerCase());
 
     const matchType = typeFilter === "all" || tx.type === typeFilter;
@@ -136,7 +136,7 @@ export default function AdminTransactions() {
                 <SelectValue placeholder="Member" />
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-slate-700">
-                <SelectItem value="">All Members</SelectItem>
+                <SelectItem value="all">All Members</SelectItem>
                 {uniqueMembers.map((member) => (
                   <SelectItem key={member} value={member}>
                     {member}
@@ -149,7 +149,7 @@ export default function AdminTransactions() {
                 <SelectValue placeholder="Product" />
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-slate-700">
-                <SelectItem value="">All Products</SelectItem>
+                <SelectItem value="all">All Products</SelectItem>
                 {uniqueProducts.map((product) => (
                   <SelectItem key={product} value={product}>
                     {product}
