@@ -112,17 +112,13 @@ export default function MemberLoans() {
         setSaving(false);
         return;
       }
-      if (!form.purpose.trim()) {
-        alert("Please enter a purpose");
-        setSaving(false);
-        return;
-      }
+      // Purpose is now optional
 
       const data = {
         member_email: user.email,
         member_name: user.full_name,
         type: loanType,
-        purpose: form.purpose,
+        purpose: form.purpose || null, // Allow blank purpose
       };
 
       if (loanType === "seeds") {

@@ -74,6 +74,7 @@ const Layout = memo(function Layout({ children, currentPageName }) {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const [loanNotificationCount, setLoanNotificationCount] = useState(0);
   const [mode, setMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('agribantay_mode') || 'dark';
@@ -99,6 +100,16 @@ const Layout = memo(function Layout({ children, currentPageName }) {
 
   const toggleMode = () => setMode((m) => (m === 'dark' ? 'light' : 'dark'));
 
+  const loadLoanNotifications = async (userEmail) => {
+    try {
+      const loans = await api.entities.LoanRequest.filter({ member_email: userEmail });
+      const actionedLoans = loans.filter((loan) => loan.status !== 'pending');
+      setLoanNotificationCount(actionedLoans.length);
+    } catch (error) {
+      console.error('Error loading loan notifications:', error);
+    }
+  };
+
   const loadUser = async () => {
     const isAuth = await api.auth.isAuthenticated();
     if (!isAuth) {
@@ -108,6 +119,12 @@ const Layout = memo(function Layout({ children, currentPageName }) {
     const me = await api.auth.me();
     console.log('👤 Layout loaded user:', me);
     setUser(me);
+    
+    // Load loan notifications for members
+    if (me.role === 'member') {
+      await loadLoanNotifications(me.email);
+    }
+    
     setLoading(false);
   };
 
@@ -208,12 +225,13 @@ const Layout = memo(function Layout({ children, currentPageName }) {
         <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
           {links.map((link) => {
             const isActive = currentPage === link.page;
+            const isLoanLink = link.page === "MemberLoans" && loanNotificationCount > 0;
             return (
               <Link
                 key={link.page}
                 to={createPageUrl(link.page)}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center justify-center lg:justify-start gap-3 px-3 py-3 rounded-lg font-medium transition-all duration-200 group/link h-12 ${
+                className={`flex items-center justify-center lg:justify-start gap-3 px-3 py-3 rounded-lg font-medium transition-all duration-200 group/link h-12 relative ${
                   isActive
                     ? "bg-teal-600 text-white shadow-lg"
                     : "text-teal-100 hover:text-white hover:bg-teal-600/50"
@@ -227,6 +245,11 @@ const Layout = memo(function Layout({ children, currentPageName }) {
                 <span className={`transition-all duration-300 whitespace-nowrap ${sidebarExpanded ? "opacity-100" : "opacity-0 hidden"}`}>
                   {link.name}
                 </span>
+                {isLoanLink && (
+                  <div className={`absolute ${sidebarExpanded ? "right-3" : "top-1 right-1"} bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse`}>
+                    {loanNotificationCount}
+                  </div>
+                )}
                 {isActive && sidebarExpanded && <ChevronRight className="w-4 h-4 ml-auto text-teal-200" />}
               </Link>
             );
@@ -289,12 +312,13 @@ const Layout = memo(function Layout({ children, currentPageName }) {
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {links.map((link) => {
             const isActive = currentPage === link.page;
+            const isLoanLink = link.page === "MemberLoans" && loanNotificationCount > 0;
             return (
               <Link
                 key={link.page}
                 to={createPageUrl(link.page)}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-3 rounded-lg font-medium transition-all duration-200 group/link ${
+                className={`flex items-center gap-3 px-3 py-3 rounded-lg font-medium transition-all duration-200 group/link relative ${
                   isActive
                     ? "bg-teal-600 text-white shadow-lg"
                     : "text-teal-100 hover:text-white hover:bg-teal-600/50"
@@ -305,6 +329,11 @@ const Layout = memo(function Layout({ children, currentPageName }) {
                   isActive ? "text-white" : "text-teal-200 group-hover/link:text-teal-300"
                 }`} />
                 <span>{link.name}</span>
+                {isLoanLink && (
+                  <div className="absolute right-3 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                    {loanNotificationCount}
+                  </div>
+                )}
                 {isActive && <ChevronRight className="w-4 h-4 ml-auto text-teal-200" />}
               </Link>
             );
@@ -390,16 +419,24 @@ const Layout = memo(function Layout({ children, currentPageName }) {
         >
           {tabLinks.map((link) => {
             const isActive = currentPage === link.page;
+            const isLoanLink = link.page === "MemberLoans" && loanNotificationCount > 0;
             return (
               <Link
                 key={link.page}
                 to={createPageUrl(link.page)}
-                className={`flex-1 flex flex-col items-center justify-center min-h-[50px] py-2 gap-1 transition-all duration-200 ${
+                className={`flex-1 flex flex-col items-center justify-center min-h-[50px] py-2 gap-1 transition-all duration-200 relative ${
                   isActive ? "text-white bg-teal-600/40" : "text-teal-100 hover:text-white"
                 }`}
                 style={{fontFamily: 'Segoe UI, Arial, sans-serif'}}
               >
-                <link.icon className={`w-6 h-6 transition-all duration-200 ${isActive ? 'scale-110' : ''}`} />
+                <div className="relative">
+                  <link.icon className={`w-6 h-6 transition-all duration-200 ${isActive ? 'scale-110' : ''}`} />
+                  {isLoanLink && (
+                    <div className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center animate-pulse">
+                      {loanNotificationCount}
+                    </div>
+                  )}
+                </div>
                 <span className="text-[11px] font-semibold">{link.name}</span>
               </Link>
             );
