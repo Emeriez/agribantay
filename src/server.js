@@ -731,4 +731,5 @@ app.get('*', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running on http://0.0.0.0:${PORT}`);
   console.log(`📱 Accessible on WiFi at http://<your-ip>:${PORT}`);
+  console.log('🔧 Loan update endpoint: Fixed dynamic parameter indexing');
 });
