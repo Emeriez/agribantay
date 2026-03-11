@@ -641,8 +641,16 @@ app.get('/api/diagnostic/users', async (req, res) => {
   }
 });
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', database: 'connected' });
+app.get('/api/health', async (req, res) => {
+  try {
+    const pool = getPool();
+    // Actually test the database connection
+    const result = await pool.query('SELECT NOW()');
+    res.json({ status: 'ok', database: 'connected', timestamp: result.rows[0].now });
+  } catch (error) {
+    console.error('❌ Health check failed:', error.message);
+    res.status(503).json({ status: 'error', database: 'disconnected', error: error.message });
+  }
 });
 
 // ===== ADMIN: SEED DATABASE (for emergency re-seeding) =====
