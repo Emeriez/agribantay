@@ -642,6 +642,25 @@ app.post('/api/admin/seed', async (req, res) => {
   }
 });
 
+// Clear all transactions (admin only)
+app.post('/api/admin/clear-transactions', async (req, res) => {
+  try {
+    const pool = getPool();
+    
+    // Delete all transactions
+    const result = await pool.query('DELETE FROM transactions');
+    
+    console.log(`✅ All transactions cleared (${result.rowCount} rows deleted)`);
+    res.json({ 
+      success: true, 
+      message: `All transactions cleared (${result.rowCount} rows deleted)`
+    });
+  } catch (error) {
+    console.error('❌ Clear transactions error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Serve index.html for all non-API routes (React Router SPA)
 app.get('*', (req, res) => {
   const filePath = path.join(__dirname, '../dist/index.html');
