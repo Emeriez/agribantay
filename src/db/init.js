@@ -55,8 +55,8 @@ export const initializeDatabase = async () => {
       await seedInitialData();
     }
   } catch (error) {
-    console.warn('⚠️  Database initialization warning:', error.message);
-    console.warn('The server will continue, but database operations may not work until the database is ready.');
+    console.error('❌ DATABASE INITIALIZATION FAILED:', error.message);
+    console.error('Full error:', error);
     // Don't throw - let the server start anyway
   }
 };
