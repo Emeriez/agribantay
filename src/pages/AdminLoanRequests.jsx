@@ -86,89 +86,104 @@ export default function AdminLoanRequests() {
     if (!pickupDate || !deadline) return;
     setProcessing(true);
 
-    // Optimistic update
     const reqId = selectedRequest.id;
-    setRequests((prev) =>
-      prev.map((r) =>
-        r.id === reqId ? { ...r, status: "approved", pickup_date: pickupDate, deadline } : r
-      )
-    );
-    closeDialog();
 
-    await api.entities.LoanRequest.update(reqId, {
-      status: "approved",
-      pickup_date: pickupDate,
-      deadline: deadline,
-    });
+    try {
+      // Update loan with approval status and dates
+      // Note: Server will automatically create transaction when status changes to 'approved'
+      await api.entities.LoanRequest.update(reqId, {
+        status: "approved",
+        pickup_date: pickupDate,
+        deadline: deadline,
+      });
 
-    // Create transaction
-    await api.entities.Transaction.create({
-      member_email: selectedRequest.member_email,
-      member_name: selectedRequest.member_name,
-      product_id: selectedRequest.product_id || "",
-      product_name: selectedRequest.product_name || "",
-      type: selectedRequest.type === "seeds" ? "seeds_loan" : "capital_loan",
-      quantity: selectedRequest.quantity || 0,
-      amount: selectedRequest.amount || 0,
-      deadline: deadline,
-      status: "active",
-      loan_request_id: selectedRequest.id,
-    });
-
-    // If seeds loan, reduce product quantity
-    if (selectedRequest.type === "seeds" && selectedRequest.product_id && selectedRequest.quantity) {
-      const products = await api.entities.Product.filter({ id: selectedRequest.product_id });
-      if (products.length > 0) {
-        const product = products[0];
-        await api.entities.Product.update(product.id, {
-          quantity: Math.max(0, product.quantity - selectedRequest.quantity),
-        });
+      // If seeds loan, reduce product quantity
+      if (selectedRequest.type === "seeds" && selectedRequest.product_id && selectedRequest.quantity) {
+        const products = await api.entities.Product.filter({ id: selectedRequest.product_id });
+        if (products.length > 0) {
+          const product = products[0];
+          await api.entities.Product.update(product.id, {
+            quantity: Math.max(0, product.quantity - selectedRequest.quantity),
+          });
+        }
       }
-    }
 
-    setProcessing(false);
-    loadRequests();
+      // Update UI after successful save
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === reqId ? { ...r, status: "approved", pickup_date: pickupDate, deadline } : r
+        )
+      );
+      closeDialog();
+      loadRequests();
+    } catch (error) {
+      console.error('❌ Error approving loan:', error);
+      alert(`Failed to approve loan: ${error.message}`);
+      // Revert any partial updates
+      loadRequests();
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const handleDecline = async () => {
     if (!declineReason) return;
     setProcessing(true);
 
-    // Optimistic update
     const reqId = selectedRequest.id;
     const reason = declineReason;
-    setRequests((prev) =>
-      prev.map((r) =>
-        r.id === reqId ? { ...r, status: "declined", decline_reason: reason } : r
-      )
-    );
-    closeDialog();
 
-    await api.entities.LoanRequest.update(reqId, {
-      status: "declined",
-      decline_reason: reason,
-    });
-    setProcessing(false);
-    loadRequests();
+    try {
+      // Update loan with declined status
+      // Note: Server will automatically create transaction when status changes to 'declined'
+      await api.entities.LoanRequest.update(reqId, {
+        status: "declined",
+        decline_reason: reason,
+      });
+      
+      // Update UI after successful save
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === reqId ? { ...r, status: "declined", decline_reason: reason } : r
+        )
+      );
+      closeDialog();
+      loadRequests();
+    } catch (error) {
+      console.error('❌ Error declining loan:', error);
+      alert(`Failed to decline loan: ${error.message}`);
+      // Revert any partial updates
+      loadRequests();
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const handleMarkPaid = async () => {
     if (!markingPaidId) return;
     setProcessing(true);
 
-    // Optimistic update
-    setRequests((prev) =>
-      prev.map((r) =>
-        r.id === markingPaidId ? { ...r, settlement_status: "paid" } : r
-      )
-    );
-    setMarkingPaidId(null);
-
-    await api.entities.LoanRequest.update(markingPaidId, {
-      settlement_status: "paid",
-    });
-    setProcessing(false);
-    loadRequests();
+    try {
+      await api.entities.LoanRequest.update(markingPaidId, {
+        settlement_status: "paid",
+      });
+      
+      // Update UI after successful save
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === markingPaidId ? { ...r, settlement_status: "paid" } : r
+        )
+      );
+      setMarkingPaidId(null);
+      loadRequests();
+    } catch (error) {
+      console.error('❌ Error marking loan as paid:', error);
+      alert(`Failed to mark loan as paid: ${error.message}`);
+      // Revert any partial updates
+      loadRequests();
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const closeDialog = () => {

@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import bcrypt from 'bcrypt';
 
 const { Pool } = pkg;
 dotenv.config();
@@ -118,16 +119,20 @@ export const initializeDatabase = async () => {
 // Seed initial data
 const seedInitialData = async () => {
   try {
-    // For demo purposes, we use plaintext (in production, use bcrypt)
+    // Passwords (these should ideally be in env variables for production)
     const adminPassword = 'admin123';
     const memberPassword = 'member123';
+    
+    // Hash passwords with bcrypt
+    const adminPasswordHash = await bcrypt.hash(adminPassword, 10);
+    const memberPasswordHash = await bcrypt.hash(memberPassword, 10);
 
     // Insert users
     const users = [
-      { email: 'admin@example.com', password: adminPassword, name: 'Admin User', full_name: 'Admin User', role: 'admin' },
-      { email: 'member1@example.com', password: memberPassword, name: 'Member 1', full_name: 'Member One', role: 'member' },
-      { email: 'member2@example.com', password: memberPassword, name: 'Member 2', full_name: 'Member Two', role: 'member' },
-      { email: 'member3@example.com', password: memberPassword, name: 'Member 3', full_name: 'Member Three', role: 'member' }
+      { email: 'admin@example.com', password: adminPasswordHash, name: 'Admin User', full_name: 'Admin User', role: 'admin' },
+      { email: 'member1@example.com', password: memberPasswordHash, name: 'Member 1', full_name: 'Member One', role: 'member' },
+      { email: 'member2@example.com', password: memberPasswordHash, name: 'Member 2', full_name: 'Member Two', role: 'member' },
+      { email: 'member3@example.com', password: memberPasswordHash, name: 'Member 3', full_name: 'Member Three', role: 'member' }
     ];
 
     for (const user of users) {
