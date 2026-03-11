@@ -596,7 +596,9 @@ app.post('/api/admin/seed', async (req, res) => {
   try {
     const pool = getPool();
     
-    // Clear existing data
+    // Clear existing data (order matters due to foreign keys)
+    await pool.query('DELETE FROM transactions');
+    await pool.query('DELETE FROM loans');
     await pool.query('DELETE FROM users');
     await pool.query('DELETE FROM products');
     
@@ -642,21 +644,22 @@ app.post('/api/admin/seed', async (req, res) => {
   }
 });
 
-// Clear all transactions (admin only)
-app.post('/api/admin/clear-transactions', async (req, res) => {
+// Clear all loans and transactions (keeps users and products) - for clean slate testing
+app.post('/api/admin/clear-loans', async (req, res) => {
   try {
     const pool = getPool();
     
-    // Delete all transactions
-    const result = await pool.query('DELETE FROM transactions');
+    // Delete loans and transactions but KEEP users and products
+    const txResult = await pool.query('DELETE FROM transactions');
+    const loansResult = await pool.query('DELETE FROM loans');
     
-    console.log(`✅ All transactions cleared (${result.rowCount} rows deleted)`);
+    console.log(`✅ Clean slate: Cleared ${loansResult.rowCount} loans and ${txResult.rowCount} transactions`);
     res.json({ 
       success: true, 
-      message: `All transactions cleared (${result.rowCount} rows deleted)`
+      message: `Clean slate! Deleted ${loansResult.rowCount} loan requests and ${txResult.rowCount} transactions. Members kept.`
     });
   } catch (error) {
-    console.error('❌ Clear transactions error:', error);
+    console.error('❌ Clear loans error:', error);
     res.status(500).json({ error: error.message });
   }
 });
