@@ -140,7 +140,7 @@ const Layout = memo(function Layout({ children, currentPageName }) {
     console.log('👤 Layout loaded user:', me);
     setUser(me);
     
-    // Load loan notifications
+    // Load loan notifications (persist until user views the page)
     await loadLoanNotifications(me.email, me.role);
     
     setLoading(false);

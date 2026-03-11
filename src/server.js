@@ -329,19 +329,45 @@ app.post('/api/loans', async (req, res) => {
 app.put('/api/loans/:id', async (req, res) => {
   try {
     const loanId = parseInt(req.params.id);
-    const { status } = req.body;
+    const { status, pickup_date, deadline, decline_reason, paid_amount } = req.body;
     const pool = getPool();
 
+    // Get the current loan to check its previous status
+    const currentLoan = await pool.query('SELECT * FROM loans WHERE id = $1', [loanId]);
+    const oldStatus = currentLoan.rows[0]?.status;
+
+    // Update the loan
     const result = await pool.query(
-      'UPDATE loans SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
-      [status, loanId]
+      'UPDATE loans SET status = $1, pickup_date = $2, deadline = $3, decline_reason = $4, paid_amount = COALESCE(paid_amount, 0) + $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6 RETURNING *',
+      [status, pickup_date || null, deadline || null, decline_reason || null, paid_amount || 0, loanId]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Loan not found' });
     }
 
-    res.json(result.rows[0]);
+    const updatedLoan = result.rows[0];
+
+    // Create transaction record if status changed to approved or declined
+    if (oldStatus !== status && (status === 'approved' || status === 'declined')) {
+      const transactionType = status === 'approved' ? 'Loan Approved' : 'Loan Declined';
+      const amount = updatedLoan.amount || 0;
+
+      await pool.query(
+        'INSERT INTO transactions (member_email, type, amount, description, created_date) VALUES ($1, $2, $3, $4, $5)',
+        [
+          updatedLoan.member_email,
+          transactionType,
+          amount,
+          `${transactionType}: ${updatedLoan.type === 'seeds' ? updatedLoan.product_name : 'Capital Loan'}`,
+          new Date().toISOString().split('T')[0]
+        ]
+      );
+
+      console.log(`✅ Transaction created for loan ${loanId}: ${transactionType}`);
+    }
+
+    res.json(updatedLoan);
   } catch (error) {
     console.error('❌ Update loan error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -371,6 +397,49 @@ app.post('/api/loans/filter', async (req, res) => {
     res.json(result.rows);
   } catch (error) {
     console.error('❌ Filter loans error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Mark a capital loan as paid (partially or fully)
+app.post('/api/loans/:id/mark-paid', async (req, res) => {
+  try {
+    const loanId = parseInt(req.params.id);
+    const { paid_amount } = req.body; // Amount paid this time
+    const pool = getPool();
+
+    // Get the current loan
+    const currentLoan = await pool.query('SELECT * FROM loans WHERE id = $1', [loanId]);
+    if (currentLoan.rows.length === 0) {
+      return res.status(404).json({ error: 'Loan not found' });
+    }
+
+    const loan = currentLoan.rows[0];
+    const newPaidAmount = (parseFloat(loan.paid_amount) || 0) + parseFloat(paid_amount);
+    const newStatus = newPaidAmount >= loan.amount ? 'settled' : 'approved';
+
+    // Update the loan
+    const result = await pool.query(
+      'UPDATE loans SET paid_amount = $1, status = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3 RETURNING *',
+      [newPaidAmount, newStatus, loanId]
+    );
+
+    // Create transaction for the payment
+    await pool.query(
+      'INSERT INTO transactions (member_email, type, amount, description, created_date) VALUES ($1, $2, $3, $4, $5)',
+      [
+        loan.member_email,
+        'Loan Payment',
+        paid_amount,
+        `Payment for ${loan.type === 'seeds' ? loan.product_name : 'Capital'} Loan (ID: ${loanId})`,
+        new Date().toISOString().split('T')[0]
+      ]
+    );
+
+    console.log(`✅ Loan ${loanId} marked as paid: ₱${paid_amount}`);
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('❌ Mark loan paid error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

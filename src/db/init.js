@@ -66,9 +66,25 @@ export const initializeDatabase = async () => {
         ADD COLUMN IF NOT EXISTS member_name VARCHAR(255),
         ADD COLUMN IF NOT EXISTS amount DECIMAL(10, 2),
         ADD COLUMN IF NOT EXISTS purpose TEXT,
+        ADD COLUMN IF NOT EXISTS paid_amount DECIMAL(10, 2) DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS pickup_date DATE,
+        ADD COLUMN IF NOT EXISTS deadline DATE,
+        ADD COLUMN IF NOT EXISTS decline_reason TEXT,
         ALTER COLUMN quantity DROP NOT NULL;
       `);
       console.log('✅ Loans table columns migrated');
+    } catch (migrationError) {
+      console.warn('⚠️ Migration warning (may be normal):', migrationError.message);
+    }
+
+    // Add missing columns to transactions table
+    try {
+      await pool.query(`
+        ALTER TABLE transactions
+        ADD COLUMN IF NOT EXISTS description TEXT,
+        ALTER COLUMN member_name DROP NOT NULL;
+      `);
+      console.log('✅ Transactions table columns migrated');
     } catch (migrationError) {
       console.warn('⚠️ Migration warning (may be normal):', migrationError.message);
     }
