@@ -98,34 +98,61 @@ export default function MemberLoans() {
   };
 
   const handleSubmit = async () => {
-    setSaving(true);
-    const data = {
-      member_email: user.email,
-      member_name: user.full_name,
-      type: loanType,
-      purpose: form.purpose,
-      status: "pending",
-    };
+    try {
+      setSaving(true);
+      
+      // Validate input
+      if (loanType === "seeds" && (!form.product_id || form.quantity <= 0)) {
+        alert("Please select a product and enter quantity");
+        setSaving(false);
+        return;
+      }
+      if (loanType === "capital" && form.amount <= 0) {
+        alert("Please enter an amount");
+        setSaving(false);
+        return;
+      }
+      if (!form.purpose.trim()) {
+        alert("Please enter a purpose");
+        setSaving(false);
+        return;
+      }
 
-    if (loanType === "seeds") {
-      data.product_id = form.product_id;
-      data.product_name = form.product_name;
-      data.quantity = form.quantity;
-    } else {
-      data.amount = form.amount;
+      const data = {
+        member_email: user.email,
+        member_name: user.full_name,
+        type: loanType,
+        purpose: form.purpose,
+      };
+
+      if (loanType === "seeds") {
+        data.product_id = parseInt(form.product_id);
+        data.product_name = form.product_name;
+        data.quantity = parseInt(form.quantity);
+      } else {
+        data.amount = parseFloat(form.amount);
+      }
+
+      console.log("📋 Submitting loan request:", data);
+      await api.entities.LoanRequest.create(data);
+      console.log("✅ Loan request created successfully");
+      
+      setSaving(false);
+      setShowForm(false);
+      setForm({ product_id: "", product_name: "", quantity: 0, amount: 0, purpose: "" });
+      
+      // Reload data
+      const [reqs, prods] = await Promise.all([
+        api.entities.LoanRequest.filter({ member_email: user.email }),
+        api.entities.Product.list(),
+      ]);
+      setRequests(reqs);
+      setProducts(prods.filter((p) => p.quantity > 0));
+    } catch (error) {
+      console.error("❌ Error submitting loan request:", error);
+      alert("Failed to submit loan request: " + error.message);
+      setSaving(false);
     }
-
-    await api.entities.LoanRequest.create(data);
-    setSaving(false);
-    setShowForm(false);
-    setForm({ product_id: "", product_name: "", quantity: 0, amount: 0, purpose: "" });
-    // Reload data
-    const [reqs, prods] = await Promise.all([
-      api.entities.LoanRequest.filter({ member_email: user.email }),
-      api.entities.Product.list(),
-    ]);
-    setRequests(reqs);
-    setProducts(prods.filter((p) => p.quantity > 0));
   };
 
   const filtered = tab === "all" ? requests : requests.filter((r) => r.status === tab);
