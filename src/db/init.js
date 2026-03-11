@@ -20,6 +20,12 @@ const poolConfig = process.env.DATABASE_URL
       password: process.env.DB_PASSWORD || 'postgres',
     };
 
+console.log('📊 Database Config:', {
+  usingDatabaseURL: !!process.env.DATABASE_URL,
+  host: poolConfig.host || 'from CONNECTION_STRING',
+  port: poolConfig.port || 'from CONNECTION_STRING'
+});
+
 const pool = new Pool(poolConfig);
 
 // Initialize database schema
@@ -37,8 +43,9 @@ export const initializeDatabase = async () => {
       await seedInitialData();
     }
   } catch (error) {
-    console.error('❌ Error initializing database:', error);
-    throw error;
+    console.warn('⚠️  Database initialization warning:', error.message);
+    console.warn('The server will continue, but database operations may not work until the database is ready.');
+    // Don't throw - let the server start anyway
   }
 };
 
