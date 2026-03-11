@@ -1,12 +1,10 @@
 // API client that communicates with Express server
 // This enables shared data across all devices
 
-// Use environment variable for API URL, or construct dynamically for local development
+// Use environment variable for API URL, or use relative path (same origin)
 const API_BASE = import.meta.env.VITE_API_URL 
   ? `${import.meta.env.VITE_API_URL}/api`
-  : typeof window !== 'undefined' 
-    ? `http://${window.location.hostname}:5000/api`
-    : 'http://localhost:5000/api';
+  : '/api'; // Relative path - same origin, works in production
 
 console.log('🔌 API Base URL:', API_BASE);
 
