@@ -309,14 +309,14 @@ app.get('/api/loans', async (req, res) => {
 
 app.post('/api/loans', async (req, res) => {
   try {
-    const { member_email, product_id, quantity, type } = req.body;
+    const { member_email, member_name, product_id, quantity, type, amount, purpose } = req.body;
     const status = 'pending';
     const created_date = new Date().toISOString().split('T')[0];
     const pool = getPool();
 
     const result = await pool.query(
-      'INSERT INTO loans (member_email, product_id, quantity, type, status, created_date) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [member_email, product_id, quantity, type, status, created_date]
+      'INSERT INTO loans (member_email, member_name, product_id, quantity, type, amount, purpose, status, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+      [member_email, member_name, product_id || null, quantity || null, type, amount || null, purpose || null, status, created_date]
     );
 
     res.json(result.rows[0]);

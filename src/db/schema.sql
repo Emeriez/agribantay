@@ -43,9 +43,12 @@ CREATE TABLE IF NOT EXISTS events (
 CREATE TABLE IF NOT EXISTS loans (
   id SERIAL PRIMARY KEY,
   member_email VARCHAR(255) NOT NULL,
+  member_name VARCHAR(255),
   product_id INTEGER,
-  quantity INTEGER NOT NULL,
+  quantity INTEGER,
+  amount DECIMAL(10, 2),
   type VARCHAR(50) NOT NULL,
+  purpose TEXT,
   status VARCHAR(50) NOT NULL DEFAULT 'pending',
   created_date DATE NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
