@@ -46,8 +46,32 @@ export const initializeDatabase = async () => {
     const schemaPath = path.join(__dirname, 'schema.sql');
     const schema = fs.readFileSync(schemaPath, 'utf-8');
     
-    await pool.query(schema);
+    // Split statements by semicolon and filter empty statements
+    const statements = schema
+      .split(';')
+      .map(stmt => stmt.trim())
+      .filter(stmt => stmt.length > 0);
+    
+    // Execute each statement individually
+    for (const statement of statements) {
+      await pool.query(statement);
+    }
+    
     console.log('✅ Database schema initialized');
+    
+    // Add missing columns to existing tables (for migration)
+    try {
+      await pool.query(`
+        ALTER TABLE loans 
+        ADD COLUMN IF NOT EXISTS member_name VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS amount DECIMAL(10, 2),
+        ADD COLUMN IF NOT EXISTS purpose TEXT,
+        ALTER COLUMN quantity DROP NOT NULL;
+      `);
+      console.log('✅ Loans table columns migrated');
+    } catch (migrationError) {
+      console.warn('⚠️ Migration warning (may be normal):', migrationError.message);
+    }
     
     // Seed initial data if tables are empty
     const userCount = await pool.query('SELECT COUNT(*) FROM users');
