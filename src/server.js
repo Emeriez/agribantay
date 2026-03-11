@@ -95,7 +95,33 @@ app.get('/api/users', async (req, res) => {
   try {
     const pool = getPool();
     const result = await pool.query('SELECT id, email, name, full_name, role FROM users');
-    res.json(result.rows);
+    
+    // Calculate balance for each user (sum of approved loans - paid amounts)
+    const usersWithBalance = await Promise.all(
+      result.rows.map(async (user) => {
+        const loansResult = await pool.query(
+          'SELECT amount, paid_amount FROM loans WHERE member_email = $1 AND status = $2',
+          [user.email, 'approved']
+        );
+        
+        // Calculate balance: total approved loan amounts minus what they've paid
+        let totalLoaned = 0;
+        let totalPaid = 0;
+        loansResult.rows.forEach(loan => {
+          totalLoaned += parseFloat(loan.amount) || 0;
+          totalPaid += parseFloat(loan.paid_amount) || 0;
+        });
+        
+        const balance = totalPaid - totalLoaned; // negative = they owe money
+        
+        return {
+          ...user,
+          balance: parseFloat(balance.toFixed(2))
+        };
+      })
+    );
+    
+    res.json(usersWithBalance);
   } catch (error) {
     console.error('❌ Get users error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -350,7 +376,8 @@ app.put('/api/loans/:id', async (req, res) => {
 
     // Create transaction record if status changed to approved or declined
     if (oldStatus !== status && (status === 'approved' || status === 'declined')) {
-      const transactionType = status === 'approved' ? 'Loan Approved' : 'Loan Declined';
+      const loanTypeLabel = updatedLoan.type === 'seeds' ? 'Seeds' : 'Capital';
+      const transactionType = status === 'approved' ? `${loanTypeLabel} Loan Approved` : `${loanTypeLabel} Loan Declined`;
       const amount = updatedLoan.amount || 0;
 
       await pool.query(
@@ -425,11 +452,12 @@ app.post('/api/loans/:id/mark-paid', async (req, res) => {
     );
 
     // Create transaction for the payment
+    const loanTypeLabel = loan.type === 'seeds' ? 'Seeds' : 'Capital';
     await pool.query(
       'INSERT INTO transactions (member_email, type, amount, description, created_date) VALUES ($1, $2, $3, $4, $5)',
       [
         loan.member_email,
-        'Loan Payment',
+        `${loanTypeLabel} Loan Payment`,
         paid_amount,
         `Payment for ${loan.type === 'seeds' ? loan.product_name : 'Capital'} Loan (ID: ${loanId})`,
         new Date().toISOString().split('T')[0]

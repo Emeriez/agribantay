@@ -99,6 +99,12 @@ export default function AdminTransactions() {
   const uniqueProducts = [...new Set(transactions.map(tx => tx.product_name).filter(Boolean))].sort();
 
   const typeColor = {
+    "Capital Loan Approved": "bg-blue-500/30 text-blue-300",
+    "Capital Loan Declined": "bg-red-500/30 text-red-300",
+    "Capital Loan Payment": "bg-cyan-500/30 text-cyan-300",
+    "Seeds Loan Approved": "bg-emerald-500/30 text-emerald-300",
+    "Seeds Loan Declined": "bg-red-500/30 text-red-300",
+    "Seeds Loan Payment": "bg-green-500/30 text-green-300",
     seeds_loan: "bg-emerald-500/30 text-emerald-300",
     capital_loan: "bg-blue-500/30 text-blue-300",
     payment: "bg-purple-500/30 text-purple-300",
@@ -157,11 +163,12 @@ export default function AdminTransactions() {
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-slate-700">
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="Loan Approved">Loan Approved</SelectItem>
-                <SelectItem value="Loan Declined">Loan Declined</SelectItem>
-                <SelectItem value="Loan Payment">Loan Payment</SelectItem>
-                <SelectItem value="seeds_loan">Seeds Loan</SelectItem>
-                <SelectItem value="capital_loan">Capital Loan</SelectItem>
+                <SelectItem value="Capital Loan Approved">Capital Loan Approved</SelectItem>
+                <SelectItem value="Capital Loan Declined">Capital Loan Declined</SelectItem>
+                <SelectItem value="Capital Loan Payment">Capital Loan Payment</SelectItem>
+                <SelectItem value="Seeds Loan Approved">Seeds Loan Approved</SelectItem>
+                <SelectItem value="Seeds Loan Declined">Seeds Loan Declined</SelectItem>
+                <SelectItem value="Seeds Loan Payment">Seeds Loan Payment</SelectItem>
                 <SelectItem value="payment">Payment</SelectItem>
                 <SelectItem value="return">Return</SelectItem>
               </SelectContent>

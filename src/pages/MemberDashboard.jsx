@@ -113,7 +113,7 @@ export default function MemberDashboard() {
               <div>
                 <p className="text-xs font-medium text-slate-300 uppercase tracking-wider mb-1">Your Balance</p>
                 <p className="text-4xl font-bold text-white">
-                  ₱{Math.abs(balance).toLocaleString()}
+                  {isNegative ? '-' : ''}₱{Math.abs(balance).toLocaleString()}
                 </p>
                 <p className={`text-xs mt-1 flex items-center gap-1 ${isNegative ? "text-red-200" : "text-emerald-200"}`}>
                   {isNegative ? (

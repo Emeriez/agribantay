@@ -170,7 +170,7 @@ export default function AdminMembers() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className={`text-sm font-semibold ${(user.balance || 0) < 0 ? "text-red-400" : "text-emerald-400"}`}>
-                        ₱{(user.balance || 0).toLocaleString()}
+                        {(user.balance || 0) < 0 ? '-' : ''}₱{Math.abs(user.balance || 0).toLocaleString()}
                       </span>
                       <Eye className="w-4 h-4 text-slate-400" />
                     </div>
@@ -205,7 +205,7 @@ export default function AdminMembers() {
                 <div className="bg-stone-50 rounded-lg p-3">
                   <p className="text-xs text-stone-400">Balance</p>
                   <p className={`font-bold ${(selectedUser.balance || 0) < 0 ? "text-red-500" : "text-emerald-600"}`}>
-                    ₱{(selectedUser.balance || 0).toLocaleString()}
+                    {(selectedUser.balance || 0) < 0 ? '-' : ''}₱{Math.abs(selectedUser.balance || 0).toLocaleString()}
                   </p>
                 </div>
                 <div className="bg-stone-50 rounded-lg p-3">
