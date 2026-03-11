@@ -89,6 +89,19 @@ export const initializeDatabase = async () => {
     } catch (migrationError) {
       console.warn('⚠️ Migration warning (may be normal):', migrationError.message);
     }
+
+    // Fix foreign key constraints to have CASCADE delete
+    try {
+      await pool.query(`
+        ALTER TABLE loans 
+        DROP CONSTRAINT IF EXISTS loans_product_id_fkey,
+        ADD CONSTRAINT loans_product_id_fkey 
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
+      `);
+      console.log('✅ Foreign key constraints updated');
+    } catch (migrationError) {
+      console.warn('⚠️ Foreign key migration warning (may be normal):', migrationError.message);
+    }
     
     // Seed initial data if tables are empty
     const userCount = await pool.query('SELECT COUNT(*) FROM users');
