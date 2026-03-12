@@ -92,7 +92,7 @@ export default function MemberDashboard() {
   }
 
   const balance = user?.balance || 0;
-  const isNegative = balance < 0;
+  const isNegative = balance > 0; // Positive balance means they OWE money (negative situation)
 
   return (
     <PullToRefresh onRefresh={loadData}>
