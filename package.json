@@ -8,6 +8,7 @@
     "start": "node src/server.js",
     "server": "node src/server.js",
     "build": "vite build",
+    "postinstall": "npm run build",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
