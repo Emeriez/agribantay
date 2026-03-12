@@ -40,7 +40,7 @@ export default function AdminLoanRequests() {
   }, []);
 
   const getSettlementStatus = (req) => {
-    if (req.settlement_status === "paid") return "paid";
+    if (req.status === "settled") return "paid";
     if (!req.deadline) return null;
     
     const today = new Date();
@@ -164,14 +164,19 @@ export default function AdminLoanRequests() {
     setProcessing(true);
 
     try {
-      await api.entities.LoanRequest.update(markingPaidId, {
-        settlement_status: "paid",
-      });
+      // Find the loan to get its amount
+      const loan = requests.find(r => r.id === markingPaidId);
+      if (!loan) {
+        throw new Error('Loan not found');
+      }
+
+      // Call mark-paid endpoint with the full loan amount
+      const result = await api.entities.LoanRequest.markPaid(markingPaidId, loan.amount);
       
       // Update UI after successful save
       setRequests((prev) =>
         prev.map((r) =>
-          r.id === markingPaidId ? { ...r, settlement_status: "paid" } : r
+          r.id === markingPaidId ? result : r
         )
       );
       setMarkingPaidId(null);
@@ -275,7 +280,7 @@ export default function AdminLoanRequests() {
                   </div>
                 </div>
 
-                {req.status === "approved" && req.settlement_status !== "paid" && (
+                {req.status === "approved" && req.status !== "settled" && (
                   <div className="flex gap-2 self-start">
                     <Button
                       size="sm"

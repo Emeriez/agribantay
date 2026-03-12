@@ -74,7 +74,7 @@ export default function MemberLoans() {
   };
 
   const getSettlementStatus = (req) => {
-    if (req.settlement_status === "paid") return "paid";
+    if (req.status === "settled") return "paid";
     if (!req.deadline) return null;
     
     const today = new Date();

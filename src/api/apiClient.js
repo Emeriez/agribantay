@@ -304,6 +304,12 @@ export const api = {
         return await apiRequest(`/loans/mark-notified/${encodeURIComponent(memberEmail)}`, {
           method: 'POST'
         });
+      },
+      markPaid: async (id, paidAmount) => {
+        return await apiRequest(`/loans/${id}/mark-paid`, {
+          method: 'POST',
+          body: JSON.stringify({ paid_amount: paidAmount })
+        });
       }
     },
     Transaction: {
