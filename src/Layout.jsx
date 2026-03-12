@@ -7,7 +7,6 @@ import { api } from "@/api/apiClient";
 import { createPageUrl } from "@/utils";
 import { pagesConfig } from './pages.config';
 import PageNotFound from './lib/PageNotFound';
-import AgriCureLogo from '@/components/AgriCureLogo';
 import {
   Home,
   Warehouse,
@@ -18,6 +17,7 @@ import {
   User as UserIcon,
   LogOut,
   Menu,
+  Sprout,
   ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -231,7 +231,7 @@ const Layout = memo(function Layout({ children, currentPageName }) {
         <div className="px-3 py-5 border-b border-teal-600/40 flex-shrink-0">
           <div className="flex items-center gap-3 w-full">
             <div className="w-10 h-10 bg-gradient-to-br from-teal-300 to-cyan-400 rounded-lg flex items-center justify-center flex-shrink-0">
-              <AgriCureLogo className="w-6 h-6" />
+              <Sprout className="w-6 h-6 text-green-900" />
             </div>
             <div className={`overflow-hidden transition-all duration-300 ${sidebarExpanded ? "opacity-100" : "opacity-0 hidden"}`}>
               <h1 className="text-lg font-bold tracking-tight whitespace-nowrap" style={{fontFamily: 'Segoe UI, Arial, sans-serif'}}>AGRICURE</h1>
