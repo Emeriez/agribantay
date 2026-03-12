@@ -83,7 +83,28 @@ app.get('/api/auth/me', async (req, res) => {
       return res.status(401).json({ error: 'User not found' });
     }
 
-    res.json(result.rows[0]);
+    const user = result.rows[0];
+    
+    // Calculate balance for this user (sum of approved loans - paid amounts)
+    const loansResult = await pool.query(
+      'SELECT amount, paid_amount FROM loans WHERE member_email = $1 AND status = $2',
+      [user.email, 'approved']
+    );
+    
+    // Calculate balance: total approved loan amounts minus what they've paid
+    let totalLoaned = 0;
+    let totalPaid = 0;
+    loansResult.rows.forEach(loan => {
+      totalLoaned += parseFloat(loan.amount) || 0;
+      totalPaid += parseFloat(loan.paid_amount) || 0;
+    });
+    
+    const balance = totalLoaned - totalPaid; // positive = they owe money, negative = overpaid
+
+    res.json({
+      ...user,
+      balance: parseFloat(balance.toFixed(2))
+    });
   } catch (error) {
     console.error('❌ Auth me error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -112,7 +133,7 @@ app.get('/api/users', async (req, res) => {
           totalPaid += parseFloat(loan.paid_amount) || 0;
         });
         
-        const balance = totalPaid - totalLoaned; // negative = they owe money
+        const balance = totalLoaned - totalPaid; // positive = they owe money, negative = overpaid
         
         return {
           ...user,

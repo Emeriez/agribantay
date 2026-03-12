@@ -46,7 +46,7 @@ export default function MemberDashboard() {
       
       console.log('✅ MemberDashboard - User is confirmed member, loading data...');
       setUser(user); // Set user in state
-      await loadData();
+      await loadData(user.id); // Pass user ID directly
       setAuthChecking(false); // Auth verified, show content
     } catch (error) {
       console.error('❌ MemberDashboard - Error:', error);
@@ -55,15 +55,18 @@ export default function MemberDashboard() {
     }
   };
 
-  const loadData = useCallback(async () => {
-    const [me, allEvents] = await Promise.all([
-      api.auth.me(),
+  const loadData = useCallback(async (userId) => {
+    const [allUsers, allEvents] = await Promise.all([
+      api.entities.User.list(),  // Fetch fresh user data with balance
       api.entities.Event.list("-event_date", 20),
     ]);
-    setUser(me);
+    
+    // Find current user from the list using the passed userId
+    const currentUser = allUsers.find(u => u.id === userId);
+    setUser(currentUser || user);
     setEvents(allEvents);
     setLoading(false);
-  }, []);
+  }, [user]);
 
   if (authChecking) {
     return (

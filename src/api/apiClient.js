@@ -12,12 +12,21 @@ console.log('🔌 API Base URL:', API_BASE);
 const apiRequest = async (endpoint, options = {}) => {
   try {
     const url = `${API_BASE}${endpoint}`;
+    
+    // Add Authorization header if user is stored
+    const user = getStoredUser();
+    const headers = {
+      'Content-Type': 'application/json',
+      ...options.headers
+    };
+    
+    if (user && user.id) {
+      headers.Authorization = `Bearer ${user.id}`;
+    }
+    
     const response = await fetch(url, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-      }
+      headers
     });
     
     if (!response.ok) {
@@ -85,13 +94,25 @@ export const api = {
       if (!user) {
         throw new Error('Not authenticated');
       }
-      console.log('📋 User from localStorage:', { id: user.id, email: user.email, role: user.role });
-      if (!user.role) {
-        console.error('❌ ERROR: Stored user missing role field!', Object.keys(user));
-        throw new Error('User object missing required role field');
+      
+      try {
+        // Fetch fresh user data from server (includes balance calculation)
+        const freshUser = await apiRequest('/auth/me');
+        console.log('📋 User from server:', { id: freshUser.id, email: freshUser.email, role: freshUser.role, balance: freshUser.balance });
+        
+        // Update localStorage with fresh data
+        setStoredUser(freshUser);
+        return JSON.parse(JSON.stringify(freshUser));
+      } catch (error) {
+        // If server request fails, fall back to cached user
+        console.log('⚠️ Failed to fetch fresh user data, using cached:', error.message);
+        console.log('📋 User from localStorage:', { id: user.id, email: user.email, role: user.role });
+        if (!user.role) {
+          console.error('❌ ERROR: Stored user missing role field!', Object.keys(user));
+          throw new Error('User object missing required role field');
+        }
+        return JSON.parse(JSON.stringify(user));
       }
-      // Return the cached user - it should have all correct fields from login
-      return JSON.parse(JSON.stringify(user));
     },
     
     login: async (email, password) => {
