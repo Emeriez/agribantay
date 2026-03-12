@@ -1,0 +1,17 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- A Letter with Leaf -->
+  <!-- Left stroke of A -->
+  <path d="M 50 150 L 100 30 L 100 30" stroke="#1b5e20" stroke-width="18" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Right stroke of A -->
+  <path d="M 100 30 L 150 150" stroke="#1b5e20" stroke-width="18" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Crossbar of A -->
+  <line x1="65" y1="110" x2="135" y2="110" stroke="#1b5e20" stroke-width="16" stroke-linecap="round"/>
+  
+  <!-- Top leaf (left) -->
+  <ellipse cx="85" cy="75" rx="24" ry="35" fill="#2e7d32" transform="rotate(-40 85 75)"/>
+  
+  <!-- Bottom leaf (right) -->
+  <ellipse cx="130" cy="120" rx="28" ry="38" fill="#43a047" transform="rotate(35 130 120)"/>
+</svg>
