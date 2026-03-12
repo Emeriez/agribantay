@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { api } from "@/api/apiClient";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Search, ArrowLeftRight } from "lucide-react";
+import { Search, ArrowLeftRight, ChevronDown, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -16,7 +16,9 @@ export default function AdminTransactions() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [transactions, setTransactions] = useState([]);
+  const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [expandedGroups, setExpandedGroups] = useState({});
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
@@ -62,6 +64,11 @@ export default function AdminTransactions() {
       const data = await api.entities.Transaction.list("-created_date", 200);
       console.log("✅ Transactions fetched:", data);
       setTransactions(data);
+      
+      const loansData = await api.entities.LoanRequest.list();
+      console.log("✅ Loans fetched:", loansData);
+      setLoans(loansData);
+      
       setLoading(false);
     } catch (error) {
       console.error("❌ Failed to load transactions:", error);
@@ -93,6 +100,59 @@ export default function AdminTransactions() {
 
     return matchSearch && matchMember && matchProduct && matchType && matchFrom && matchTo;
   });
+
+  // Group capital loan transactions
+  const groupedTransactions = () => {
+    const groups = [];
+    const usedIndices = new Set();
+
+    filtered.forEach((tx, idx) => {
+      if (usedIndices.has(idx)) return;
+
+      if (tx.type === "Capital Loan Approved") {
+        const groupId = `${tx.member_email}-${tx.amount}`;
+        
+        // Find corresponding payment transaction
+        const paymentTx = filtered.find((t, i) => 
+          !usedIndices.has(i) &&
+          t.type === "Capital Loan Payment" &&
+          t.member_email === tx.member_email &&
+          t.amount === tx.amount
+        );
+
+        const isSettled = !!paymentTx;
+        
+        groups.push({
+          type: "group",
+          groupId,
+          parent: tx,
+          child: paymentTx,
+          isSettled,
+          isExpanded: expandedGroups[groupId] !== false, // Default expanded
+        });
+
+        usedIndices.add(idx);
+        if (paymentTx) {
+          usedIndices.add(filtered.indexOf(paymentTx));
+        }
+      } else if (tx.type !== "Capital Loan Payment") {
+        groups.push({
+          type: "single",
+          transaction: tx,
+        });
+        usedIndices.add(idx);
+      }
+    });
+
+    return groups;
+  };
+
+  const toggleGroup = (groupId) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [groupId]: !prev[groupId]
+    }));
+  };
 
   // Get unique members and products for filter dropdowns
   const uniqueMembers = [...new Set(transactions.map(tx => tx.member_name).filter(Boolean))].sort();
@@ -205,33 +265,111 @@ export default function AdminTransactions() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((tx) => (
-                  <tr key={tx.id} className="border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors">
-                    <td className="px-5 py-3.5">
-                      <p className="font-medium text-white">{tx.member_name || "—"}</p>
-                      <p className="text-[11px] text-slate-400">{tx.member_email}</p>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${typeColor[tx.type] || "bg-slate-700 text-slate-300"}`}>
-                        {tx.type?.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5 text-slate-300">{tx.product_name || "—"}</td>
-                    <td className="px-5 py-3.5 font-medium text-white">₱{(tx.amount || 0).toLocaleString()}</td>
-                    <td className="px-5 py-3.5 text-slate-400">
-                      {tx.created_date ? format(new Date(tx.created_date), "MMM dd, yyyy") : "—"}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
-                        tx.status === "completed" ? "bg-emerald-500/30 text-emerald-300" :
-                        tx.status === "overdue" ? "bg-red-500/30 text-red-300" :
-                        "bg-amber-500/30 text-amber-300"
-                      }`}>
-                        {tx.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {groupedTransactions().map((item, idx) => {
+                  if (item.type === "group") {
+                    return (
+                      <React.Fragment key={item.groupId}>
+                        <tr 
+                          onClick={() => toggleGroup(item.groupId)}
+                          className="border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors cursor-pointer"
+                        >
+                          <td className="px-5 py-3.5">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                                item.isSettled ? "bg-emerald-500" : "bg-amber-500"
+                              }`} />
+                              <div>
+                                <p className="font-medium text-white">{item.parent.member_name || "—"}</p>
+                                <p className="text-[11px] text-slate-400">{item.parent.member_email}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-5 py-3.5">
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${typeColor[item.parent.type] || "bg-slate-700 text-slate-300"}`}>
+                                {item.parent.type?.replace("_", " ")}
+                              </span>
+                              {item.child && (
+                                item.isExpanded ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-5 py-3.5 text-slate-300">{item.parent.product_name || "—"}</td>
+                          <td className="px-5 py-3.5 font-medium text-white">₱{(item.parent.amount || 0).toLocaleString()}</td>
+                          <td className="px-5 py-3.5 text-slate-400">
+                            {item.parent.created_date ? format(new Date(item.parent.created_date), "MMM dd, yyyy") : "—"}
+                          </td>
+                          <td className="px-5 py-3.5">
+                            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                              item.isSettled 
+                                ? "bg-emerald-500/30 text-emerald-300" 
+                                : "bg-amber-500/30 text-amber-300"
+                            }`}>
+                              {item.isSettled ? "Settled" : "Pending"}
+                            </span>
+                          </td>
+                        </tr>
+                        {item.child && item.isExpanded && (
+                          <tr className="border-b border-slate-700/30 bg-slate-700/10 hover:bg-slate-700/15 transition-colors">
+                            <td className="px-5 py-3.5 pl-12">
+                              <p className="font-medium text-slate-300">{item.child.member_name || "—"}</p>
+                              <p className="text-[11px] text-slate-500">{item.child.member_email}</p>
+                            </td>
+                            <td className="px-5 py-3.5">
+                              <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${typeColor[item.child.type] || "bg-slate-700 text-slate-300"}`}>
+                                {item.child.type?.replace("_", " ")}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3.5 text-slate-400">{item.child.product_name || "—"}</td>
+                            <td className="px-5 py-3.5 font-medium text-emerald-400">₱{(item.child.amount || 0).toLocaleString()}</td>
+                            <td className="px-5 py-3.5 text-slate-500">
+                              {item.child.created_date ? format(new Date(item.child.created_date), "MMM dd, yyyy") : "—"}
+                            </td>
+                            <td className="px-5 py-3.5">
+                              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-300">
+                                Received
+                              </span>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  } else {
+                    const tx = item.transaction;
+                    return (
+                      <tr key={tx.id} className="border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors">
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-slate-600" />
+                            <div>
+                              <p className="font-medium text-white">{tx.member_name || "—"}</p>
+                              <p className="text-[11px] text-slate-400">{tx.member_email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${typeColor[tx.type] || "bg-slate-700 text-slate-300"}`}>
+                            {tx.type?.replace("_", " ")}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5 text-slate-300">{tx.product_name || "—"}</td>
+                        <td className="px-5 py-3.5 font-medium text-white">₱{(tx.amount || 0).toLocaleString()}</td>
+                        <td className="px-5 py-3.5 text-slate-400">
+                          {tx.created_date ? format(new Date(tx.created_date), "MMM dd, yyyy") : "—"}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                            tx.status === "completed" ? "bg-emerald-500/30 text-emerald-300" :
+                            tx.status === "overdue" ? "bg-red-500/30 text-red-300" :
+                            "bg-amber-500/30 text-amber-300"
+                          }`}>
+                            {tx.status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  }
+                })}
               </tbody>
             </table>
           </div>
