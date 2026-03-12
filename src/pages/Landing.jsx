@@ -132,7 +132,7 @@ export default function Landing() {
             <Sprout className="w-10 h-10 text-emerald-400" />
           </div>
           <h1 className="text-5xl font-bold text-white tracking-tight mb-2">
-            agribantay jiliskrr
+            AgriCure
           </h1>
           <p className="text-emerald-300/70 text-lg font-light">
             Agricultural Cooperative Management System

@@ -77,7 +77,7 @@ const Layout = memo(function Layout({ children, currentPageName }) {
   const [loanNotificationCount, setLoanNotificationCount] = useState(0);
   const [mode, setMode] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('agribantay_mode') || 'dark';
+      return localStorage.getItem('agricure_mode') || 'dark';
     }
     return 'dark';
   });
@@ -95,7 +95,7 @@ const Layout = memo(function Layout({ children, currentPageName }) {
       document.body.classList.add(mode);
       document.documentElement.classList.add(mode);
     }
-    localStorage.setItem('agribantay_mode', mode);
+    localStorage.setItem('agricure_mode', mode);
   }, [mode]);
 
   // Clear loan notifications when viewing loan pages
@@ -234,7 +234,7 @@ const Layout = memo(function Layout({ children, currentPageName }) {
               <Sprout className="w-6 h-6 text-teal-900 animate-pulse" />
             </div>
             <div className={`overflow-hidden transition-all duration-300 ${sidebarExpanded ? "opacity-100" : "opacity-0 hidden"}`}>
-              <h1 className="text-lg font-bold tracking-tight whitespace-nowrap" style={{fontFamily: 'Segoe UI, Arial, sans-serif'}}>AGRIBANTAY</h1>
+              <h1 className="text-lg font-bold tracking-tight whitespace-nowrap" style={{fontFamily: 'Segoe UI, Arial, sans-serif'}}>AGRICURE</h1>
               <p className="text-teal-100 text-[10px] uppercase tracking-widest" style={{fontFamily: 'Segoe UI, Arial, sans-serif'}}>
                 {isAdmin ? "Admin Portal" : "Member Portal"}
               </p>
@@ -321,7 +321,7 @@ const Layout = memo(function Layout({ children, currentPageName }) {
               <Sprout className="w-6 h-6 text-teal-900 animate-pulse" />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight" style={{fontFamily: 'Segoe UI, Arial, sans-serif'}}>AGRIBANTAY</h1>
+              <h1 className="text-lg font-bold tracking-tight" style={{fontFamily: 'Segoe UI, Arial, sans-serif'}}>AGRICURE</h1>
               <p className="text-teal-100 text-[10px] uppercase tracking-widest" style={{fontFamily: 'Segoe UI, Arial, sans-serif'}}>
                 {isAdmin ? "Admin Portal" : "Member Portal"}
               </p>
