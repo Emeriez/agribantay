@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { api } from "@/api/apiClient";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Sprout, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import AgriCureLogo from "@/components/AgriCureLogo";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -112,7 +113,7 @@ export default function Landing() {
   if (checking) {
     return (
       <div className="h-screen flex items-center justify-center bg-stone-50">
-        <Sprout className="w-10 h-10 text-emerald-600 animate-pulse" />
+        <AgriCureLogo className="w-10 h-10" />
       </div>
     );
   }
@@ -129,7 +130,7 @@ export default function Landing() {
         {/* Logo & Title */}
         <div className="text-center mb-10">
           <div className="w-20 h-20 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6 backdrop-blur-sm border border-emerald-400/20">
-            <Sprout className="w-10 h-10 text-emerald-400" />
+            <AgriCureLogo className="w-10 h-10" />
           </div>
           <h1 className="text-5xl font-bold text-white tracking-tight mb-2">
             AgriCure
