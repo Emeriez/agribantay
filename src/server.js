@@ -573,7 +573,7 @@ app.post('/api/loans/filter', async (req, res) => {
   }
 });
 
-// Mark a capital loan as paid (partially or fully)
+// Mark a loan as paid (partially or fully)
 app.post('/api/loans/:id/mark-paid', async (req, res) => {
   try {
     const loanId = parseInt(req.params.id);
@@ -587,8 +587,19 @@ app.post('/api/loans/:id/mark-paid', async (req, res) => {
     }
 
     const loan = currentLoan.rows[0];
+    
+    // Calculate total amount owed
+    let totalAmount = loan.amount;
+    if (loan.type === 'seeds' && loan.quantity && loan.product_id) {
+      // For seed loans, fetch product price and calculate amount
+      const productResult = await pool.query('SELECT price_per_unit FROM products WHERE id = $1', [loan.product_id]);
+      if (productResult.rows.length > 0) {
+        totalAmount = loan.quantity * productResult.rows[0].price_per_unit;
+      }
+    }
+    
     const newPaidAmount = (parseFloat(loan.paid_amount) || 0) + parseFloat(paid_amount);
-    const newStatus = newPaidAmount >= loan.amount ? 'settled' : 'approved';
+    const newStatus = newPaidAmount >= totalAmount ? 'settled' : 'approved';
 
     // Update the loan
     const result = await pool.query(

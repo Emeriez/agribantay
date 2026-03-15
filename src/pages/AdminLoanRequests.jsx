@@ -170,8 +170,19 @@ export default function AdminLoanRequests() {
         throw new Error('Loan not found');
       }
 
+      // Calculate amount for seed loans
+      let amountToPay = loan.amount;
+      if (loan.type === "seeds" && loan.product_id && loan.quantity) {
+        // Fetch product to get price_per_unit
+        const products = await api.entities.Product.filter({ id: loan.product_id });
+        if (products.length > 0) {
+          const product = products[0];
+          amountToPay = loan.quantity * (product.price_per_unit || 0);
+        }
+      }
+
       // Call mark-paid endpoint with the full loan amount
-      const result = await api.entities.LoanRequest.markPaid(markingPaidId, loan.amount);
+      const result = await api.entities.LoanRequest.markPaid(markingPaidId, amountToPay);
       
       // Update UI after successful save
       setRequests((prev) =>
