@@ -448,6 +448,7 @@ app.put('/api/loans/:id', async (req, res) => {
     }
     
     const oldStatus = currentLoan.rows[0].status;
+    const loan = currentLoan.rows[0];
     
     // Build query dynamically with only provided fields to avoid type coercion issues
     const updates = ['updated_at = CURRENT_TIMESTAMP'];
@@ -490,6 +491,17 @@ app.put('/api/loans/:id', async (req, res) => {
       paramIndex++;
     }
 
+    // Calculate and store amount for seed loans when approving
+    if (status === 'approved' && loan.type === 'seeds' && (!loan.amount || loan.amount === 0) && loan.quantity && loan.product_id) {
+      const productResult = await pool.query('SELECT price_per_unit FROM products WHERE id = $1', [loan.product_id]);
+      if (productResult.rows.length > 0) {
+        const calculatedAmount = loan.quantity * productResult.rows[0].price_per_unit;
+        updates.push(`amount = $${paramIndex}`);
+        values.push(calculatedAmount);
+        paramIndex++;
+      }
+    }
+
     // Reset member_notified_at if status is changing
     if (status !== undefined && status !== oldStatus) {
       updates.push(`member_notified_at = NULL`);
@@ -516,14 +528,8 @@ app.put('/api/loans/:id', async (req, res) => {
       const loanTypeLabel = updatedLoan.type === 'seeds' ? 'Seeds' : 'Capital';
       const transactionType = status === 'approved' ? `${loanTypeLabel} Loan Approved` : `${loanTypeLabel} Loan Declined`;
       
-      // Calculate amount for seed loans (quantity * price_per_unit)
-      let amount = updatedLoan.amount || 0;
-      if (updatedLoan.type === 'seeds' && updatedLoan.quantity && updatedLoan.product_id) {
-        const productResult = await pool.query('SELECT price_per_unit FROM products WHERE id = $1', [updatedLoan.product_id]);
-        if (productResult.rows.length > 0) {
-          amount = updatedLoan.quantity * productResult.rows[0].price_per_unit;
-        }
-      }
+      // Use the amount stored in loans table (calculated at approval time for seed loans)
+      const amount = updatedLoan.amount || 0;
 
       await pool.query(
         'INSERT INTO transactions (member_email, member_name, type, amount, product_name, product_id, description, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
@@ -613,10 +619,11 @@ app.post('/api/loans/:id/mark-paid', async (req, res) => {
 
     const loan = currentLoan.rows[0];
     
-    // Calculate total amount owed
+    // Use the loan's stored amount (set when loan was approved)
+    // Only recalculate if amount was not set (NULL or 0)
     let totalAmount = loan.amount;
-    if (loan.type === 'seeds' && loan.quantity && loan.product_id) {
-      // For seed loans, fetch product price and calculate amount
+    if (loan.type === 'seeds' && (!totalAmount || totalAmount === 0) && loan.quantity && loan.product_id) {
+      // For seed loans, fetch product price and calculate amount as fallback
       const productResult = await pool.query('SELECT price_per_unit FROM products WHERE id = $1', [loan.product_id]);
       if (productResult.rows.length > 0) {
         totalAmount = loan.quantity * productResult.rows[0].price_per_unit;

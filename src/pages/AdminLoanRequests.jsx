@@ -170,10 +170,11 @@ export default function AdminLoanRequests() {
         throw new Error('Loan not found');
       }
 
-      // Calculate amount for seed loans
+      // Use the loan's stored amount (set when loan was approved)
+      // Only recalculate if amount was not set (NULL or 0)
       let amountToPay = loan.amount;
-      if (loan.type === "seeds" && loan.product_id && loan.quantity) {
-        // Fetch product to get price_per_unit
+      if (loan.type === "seeds" && (!amountToPay || amountToPay === 0) && loan.product_id && loan.quantity) {
+        // Fetch product to get price_per_unit - only as fallback if amount is missing
         const products = await api.entities.Product.filter({ id: loan.product_id });
         if (products.length > 0) {
           const product = products[0];
