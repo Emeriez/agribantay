@@ -795,6 +795,23 @@ app.post('/api/admin/clear-loans', async (req, res) => {
   }
 });
 
+// Clear only transactions while keeping loans intact
+app.post('/api/admin/clear-transactions', async (req, res) => {
+  try {
+    const pool = getPool();
+    const result = await pool.query('DELETE FROM transactions');
+    
+    console.log(`✅ Cleared ${result.rowCount} transactions`);
+    res.json({ 
+      success: true, 
+      message: `Cleared ${result.rowCount} transaction records. Loan data intact.`
+    });
+  } catch (error) {
+    console.error('❌ Clear transactions error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Serve index.html for all non-API routes (React Router SPA)
 app.get('*', (req, res) => {
   const filePath = path.join(__dirname, '../dist/index.html');
