@@ -85,14 +85,14 @@ app.get('/api/auth/me', async (req, res) => {
 
     const user = result.rows[0];
     
-    // Calculate balance for this user (sum of approved loans - paid amounts)
+    // Calculate balance for this user (sum of approved + settled loans - paid amounts)
     // For seed loans, calculate amount as quantity * price_per_unit
     const loansResult = await pool.query(
       `SELECT l.type, l.amount, l.paid_amount, l.quantity, l.product_id, p.price_per_unit 
        FROM loans l 
        LEFT JOIN products p ON l.product_id = p.id 
-       WHERE l.member_email = $1 AND l.status = $2`,
-      [user.email, 'approved']
+       WHERE l.member_email = $1 AND l.status IN ('approved', 'settled')`,
+      [user.email]
     );
     
     // Calculate balance: total approved loan amounts minus what they've paid
@@ -126,15 +126,15 @@ app.get('/api/users', async (req, res) => {
     const pool = getPool();
     const result = await pool.query('SELECT id, email, name, full_name, role FROM users');
     
-    // Calculate balance for each user (sum of approved loans - paid amounts)
+    // Calculate balance for each user (sum of approved + settled loans - paid amounts)
     const usersWithBalance = await Promise.all(
       result.rows.map(async (user) => {
         const loansResult = await pool.query(
           `SELECT l.type, l.amount, l.paid_amount, l.quantity, l.product_id, p.price_per_unit 
            FROM loans l 
            LEFT JOIN products p ON l.product_id = p.id 
-           WHERE l.member_email = $1 AND l.status = $2`,
-          [user.email, 'approved']
+           WHERE l.member_email = $1 AND l.status IN ('approved', 'settled')`,
+          [user.email]
         );
         
         // Calculate balance: total approved loan amounts minus what they've paid
