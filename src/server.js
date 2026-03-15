@@ -207,6 +207,14 @@ app.put('/api/products/:id', async (req, res) => {
     const { name, category, quantity, unit, price_per_unit } = req.body;
     const pool = getPool();
 
+    // Validate that required fields are provided
+    if (name === undefined || name === null || name === '') {
+      return res.status(400).json({ error: 'Product name is required' });
+    }
+    if (category === undefined || category === null || category === '') {
+      return res.status(400).json({ error: 'Product category is required' });
+    }
+
     const result = await pool.query(
       'UPDATE products SET name = $1, category = $2, quantity = $3, unit = $4, price_per_unit = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6 RETURNING *',
       [name, category, quantity, unit, price_per_unit, productId]
