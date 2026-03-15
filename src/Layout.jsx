@@ -88,6 +88,17 @@ const Layout = memo(function Layout({ children, currentPageName }) {
     loadUser();
   }, []);
 
+  // Periodically refresh loan notifications (every 5 seconds)
+  useEffect(() => {
+    if (!user) return;
+    
+    const interval = setInterval(async () => {
+      await loadLoanNotifications(user.email, user.role);
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [user]);
+
   useEffect(() => {
     if (typeof document !== 'undefined') {
       document.body.classList.remove('dark', 'light');

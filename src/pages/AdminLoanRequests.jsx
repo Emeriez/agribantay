@@ -258,8 +258,19 @@ export default function AdminLoanRequests() {
                       <span className="text-xs text-slate-400">
                         {req.created_date ? format(new Date(req.created_date), "MMM dd, yyyy") : ""}
                       </span>
+                      <Badge className={
+                        req.status === "pending" ? "bg-amber-500/30 text-amber-300" :
+                        req.status === "approved" ? "bg-emerald-500/30 text-emerald-300" :
+                        req.status === "declined" ? "bg-red-500/30 text-red-300" :
+                        "bg-slate-500/30 text-slate-300"
+                      }>
+                        {req.status === "pending" ? "Pending" :
+                         req.status === "approved" ? "Approved" :
+                         req.status === "declined" ? "Declined" :
+                         req.status === "settled" ? "Settled" : req.status}
+                      </Badge>
                       {req.status === "approved" && getSettlementStatus(req) && (
-                        <div className="flex items-center gap-1.5 ml-1">
+                        <div className="flex items-center gap-1.5">
                           <div className={`w-2.5 h-2.5 rounded-full ${getSettlementColor(getSettlementStatus(req))}`} />
                           <span className="text-xs text-slate-300 capitalize">{getSettlementStatus(req)}</span>
                         </div>

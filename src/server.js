@@ -517,6 +517,28 @@ app.put('/api/loans/:id', async (req, res) => {
       console.log(`✅ Transaction created for loan ${loanId}: ${transactionType}`);
     }
 
+    // Create transaction record if payment is recorded
+    if (paid_amount !== undefined && paid_amount > 0) {
+      const loanTypeLabel = updatedLoan.type === 'seeds' ? 'Seeds' : 'Capital';
+      const transactionType = `${loanTypeLabel} Loan Payment`;
+      
+      await pool.query(
+        'INSERT INTO transactions (member_email, member_name, type, amount, product_name, product_id, description, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        [
+          updatedLoan.member_email,
+          updatedLoan.member_name,
+          transactionType,
+          paid_amount,
+          updatedLoan.product_name || null,
+          updatedLoan.product_id || null,
+          `${transactionType}: ₱${paid_amount} paid for ${updatedLoan.type === 'seeds' ? updatedLoan.product_name : 'Capital Loan'}`,
+          new Date().toISOString().split('T')[0]
+        ]
+      );
+
+      console.log(`✅ Payment transaction created for loan ${loanId}: ₱${paid_amount}`);
+    }
+
     res.json(updatedLoan);
   } catch (error) {
     console.error('❌ Update loan error:', error);
@@ -577,11 +599,13 @@ app.post('/api/loans/:id/mark-paid', async (req, res) => {
     // Create transaction for the payment
     const loanTypeLabel = loan.type === 'seeds' ? 'Seeds' : 'Capital';
     await pool.query(
-      'INSERT INTO transactions (member_email, type, amount, description, created_date) VALUES ($1, $2, $3, $4, $5)',
+      'INSERT INTO transactions (member_email, member_name, type, amount, product_name, description, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7)',
       [
         loan.member_email,
+        loan.member_name,
         `${loanTypeLabel} Loan Payment`,
         paid_amount,
+        loan.product_name || null,
         `Payment for ${loan.type === 'seeds' ? loan.product_name : 'Capital'} Loan (ID: ${loanId})`,
         new Date().toISOString().split('T')[0]
       ]
