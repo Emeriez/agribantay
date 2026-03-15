@@ -55,18 +55,20 @@ export default function MemberDashboard() {
     }
   };
 
-  const loadData = useCallback(async (userId) => {
+  const loadData = useCallback(async (currentUserId) => {
     const [allUsers, allEvents] = await Promise.all([
       api.entities.User.list(),  // Fetch fresh user data with balance
       api.entities.Event.list("-event_date", 20),
     ]);
     
     // Find current user from the list using the passed userId
-    const currentUser = allUsers.find(u => u.id === userId);
-    setUser(currentUser || user);
+    const currentUser = allUsers.find(u => u.id === currentUserId);
+    if (currentUser) {
+      setUser(currentUser);
+    }
     setEvents(allEvents);
     setLoading(false);
-  }, [user]);
+  }, []);
 
   if (authChecking) {
     return (
