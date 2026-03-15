@@ -250,9 +250,10 @@ export const api = {
           body: JSON.stringify(data)
         });
       },
-      delete: async (id) => {
+      delete: async (id, options = {}) => {
         return await apiRequest(`/products/${id}`, {
-          method: 'DELETE'
+          method: 'DELETE',
+          body: JSON.stringify(options)
         });
       }
     },

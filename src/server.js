@@ -245,17 +245,43 @@ app.put('/api/products/:id', async (req, res) => {
 app.delete('/api/products/:id', async (req, res) => {
   try {
     const productId = parseInt(req.params.id);
+    const { reason } = req.body;
     const pool = getPool();
 
-    const result = await pool.query(
-      'DELETE FROM products WHERE id = $1 RETURNING id',
+    // Get product details before deletion
+    const productResult = await pool.query(
+      'SELECT * FROM products WHERE id = $1',
       [productId]
     );
 
-    if (result.rows.length === 0) {
+    if (productResult.rows.length === 0) {
       return res.status(404).json({ error: 'Product not found' });
     }
 
+    const product = productResult.rows[0];
+
+    // Delete the product
+    await pool.query(
+      'DELETE FROM products WHERE id = $1',
+      [productId]
+    );
+
+    // Create transaction record for product removal
+    await pool.query(
+      'INSERT INTO transactions (member_email, member_name, type, amount, product_name, product_id, description, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+      [
+        'admin@agribantay.com',
+        'Admin',
+        'Product Removal',
+        0,
+        product.name,
+        productId,
+        reason || 'Product removed from inventory',
+        new Date().toISOString().split('T')[0]
+      ]
+    );
+
+    console.log(`✅ Product deleted: ${product.name} (ID: ${productId})`);
     res.json({ success: true });
   } catch (error) {
     console.error('❌ Delete product error:', error);
@@ -475,11 +501,14 @@ app.put('/api/loans/:id', async (req, res) => {
       const amount = updatedLoan.amount || 0;
 
       await pool.query(
-        'INSERT INTO transactions (member_email, type, amount, description, created_date) VALUES ($1, $2, $3, $4, $5)',
+        'INSERT INTO transactions (member_email, member_name, type, amount, product_name, product_id, description, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
         [
           updatedLoan.member_email,
+          updatedLoan.member_name,
           transactionType,
           amount,
+          updatedLoan.product_name || null,
+          updatedLoan.product_id || null,
           `${transactionType}: ${updatedLoan.type === 'seeds' ? updatedLoan.product_name : 'Capital Loan'}`,
           new Date().toISOString().split('T')[0]
         ]

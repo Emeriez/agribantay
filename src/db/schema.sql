@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS transactions (
   member_email VARCHAR(255) NOT NULL,
   product_name VARCHAR(255),
   product_id INTEGER,
+  description TEXT,
   created_date DATE NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -46,6 +46,7 @@ export default function AdminInventory() {
   const [form, setForm] = useState(emptyProduct);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, product: null, reason: "" });
 
   useEffect(() => {
     checkAuthAndLoad();
@@ -91,8 +92,15 @@ export default function AdminInventory() {
     loadProducts();
   };
 
-  const handleDelete = async (id) => {
-    await api.entities.Product.delete(id);
+  const handleDelete = (product) => {
+    setDeleteDialog({ open: true, product, reason: "" });
+  };
+
+  const confirmDelete = async () => {
+    setSaving(true);
+    await api.entities.Product.delete(deleteDialog.product.id, { reason: deleteDialog.reason });
+    setDeleteDialog({ open: false, product: null, reason: "" });
+    setSaving(false);
     loadProducts();
   };
 
@@ -185,7 +193,7 @@ export default function AdminInventory() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDelete(product.id);
+                      handleDelete(product);
                     }}
                     className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400"
                   >
@@ -255,6 +263,35 @@ export default function AdminInventory() {
             <Button variant="outline" onClick={() => { setShowForm(false); setEditingProduct(null); }}>Cancel</Button>
             <Button onClick={handleSave} disabled={saving || !form.name} className="bg-emerald-600 hover:bg-emerald-700">
               {saving ? "Saving..." : editingProduct ? "Update" : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false, product: null, reason: "" })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Product</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600">
+              Are you sure you want to delete <strong>{deleteDialog.product?.name}</strong>? This action will be logged in the transaction history.
+            </p>
+            <div>
+              <Label>Reason for Removal</Label>
+              <Textarea 
+                value={deleteDialog.reason} 
+                onChange={(e) => setDeleteDialog({ ...deleteDialog, reason: e.target.value })} 
+                placeholder="e.g., Expired, Damaged, Obsolete..."
+                className="h-24"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialog({ open: false, product: null, reason: "" })}>Cancel</Button>
+            <Button onClick={confirmDelete} disabled={saving} variant="destructive">
+              {saving ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
