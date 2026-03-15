@@ -207,22 +207,33 @@ app.put('/api/products/:id', async (req, res) => {
     const { name, category, quantity, unit, price_per_unit } = req.body;
     const pool = getPool();
 
-    // Validate that required fields are provided
-    if (name === undefined || name === null || name === '') {
+    // Get current product to use as fallback for missing fields
+    const currentProduct = await pool.query('SELECT * FROM products WHERE id = $1', [productId]);
+    if (currentProduct.rows.length === 0) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    const product = currentProduct.rows[0];
+
+    // Use provided values or fallback to existing values
+    const finalName = name !== undefined && name !== null && name !== '' ? name : product.name;
+    const finalCategory = category !== undefined && category !== null && category !== '' ? category : product.category;
+    const finalQuantity = quantity !== undefined && quantity !== null ? quantity : product.quantity;
+    const finalUnit = unit !== undefined && unit !== null ? unit : product.unit;
+    const finalPrice = price_per_unit !== undefined && price_per_unit !== null ? price_per_unit : product.price_per_unit;
+
+    // Validate that required fields are not null after fallback
+    if (!finalName) {
       return res.status(400).json({ error: 'Product name is required' });
     }
-    if (category === undefined || category === null || category === '') {
+    if (!finalCategory) {
       return res.status(400).json({ error: 'Product category is required' });
     }
 
     const result = await pool.query(
       'UPDATE products SET name = $1, category = $2, quantity = $3, unit = $4, price_per_unit = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6 RETURNING *',
-      [name, category, quantity, unit, price_per_unit, productId]
+      [finalName, finalCategory, finalQuantity, finalUnit, finalPrice, productId]
     );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Product not found' });
-    }
 
     res.json(result.rows[0]);
   } catch (error) {
@@ -364,14 +375,14 @@ app.get('/api/loans', async (req, res) => {
 
 app.post('/api/loans', async (req, res) => {
   try {
-    const { member_email, member_name, product_id, quantity, type, amount, purpose } = req.body;
+    const { member_email, member_name, product_id, product_name, quantity, type, amount, purpose } = req.body;
     const status = 'pending';
     const created_date = new Date().toISOString().split('T')[0];
     const pool = getPool();
 
     const result = await pool.query(
-      'INSERT INTO loans (member_email, member_name, product_id, quantity, type, amount, purpose, status, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
-      [member_email, member_name, product_id || null, quantity || null, type, amount || null, purpose || null, status, created_date]
+      'INSERT INTO loans (member_email, member_name, product_id, product_name, quantity, type, amount, purpose, status, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
+      [member_email, member_name, product_id || null, product_name || null, quantity || null, type, amount || null, purpose || null, status, created_date]
     );
 
     res.json(result.rows[0]);

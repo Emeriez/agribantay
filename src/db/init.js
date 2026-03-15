@@ -67,12 +67,12 @@ export const initializeDatabase = async () => {
         ADD COLUMN IF NOT EXISTS member_name VARCHAR(255),
         ADD COLUMN IF NOT EXISTS amount DECIMAL(10, 2),
         ADD COLUMN IF NOT EXISTS purpose TEXT,
+        ADD COLUMN IF NOT EXISTS product_name VARCHAR(255),
         ADD COLUMN IF NOT EXISTS paid_amount DECIMAL(10, 2) DEFAULT 0,
         ADD COLUMN IF NOT EXISTS pickup_date DATE,
         ADD COLUMN IF NOT EXISTS deadline DATE,
         ADD COLUMN IF NOT EXISTS decline_reason TEXT,
-        ADD COLUMN IF NOT EXISTS member_notified_at TIMESTAMP DEFAULT NULL,
-        ALTER COLUMN quantity DROP NOT NULL;
+        ADD COLUMN IF NOT EXISTS member_notified_at TIMESTAMP DEFAULT NULL;
       `);
       console.log('✅ Loans table columns migrated');
     } catch (migrationError) {
