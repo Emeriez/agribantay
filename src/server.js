@@ -86,8 +86,12 @@ app.get('/api/auth/me', async (req, res) => {
     const user = result.rows[0];
     
     // Calculate balance for this user (sum of approved loans - paid amounts)
+    // For seed loans, calculate amount as quantity * price_per_unit
     const loansResult = await pool.query(
-      'SELECT amount, paid_amount FROM loans WHERE member_email = $1 AND status = $2',
+      `SELECT l.type, l.amount, l.paid_amount, l.quantity, l.product_id, p.price_per_unit 
+       FROM loans l 
+       LEFT JOIN products p ON l.product_id = p.id 
+       WHERE l.member_email = $1 AND l.status = $2`,
       [user.email, 'approved']
     );
     
@@ -95,7 +99,12 @@ app.get('/api/auth/me', async (req, res) => {
     let totalLoaned = 0;
     let totalPaid = 0;
     loansResult.rows.forEach(loan => {
-      totalLoaned += parseFloat(loan.amount) || 0;
+      let loanAmount = loan.amount || 0;
+      // For seed loans, calculate amount from quantity * price_per_unit
+      if (loan.type === 'seeds' && loan.quantity && loan.price_per_unit) {
+        loanAmount = loan.quantity * loan.price_per_unit;
+      }
+      totalLoaned += parseFloat(loanAmount) || 0;
       totalPaid += parseFloat(loan.paid_amount) || 0;
     });
     
@@ -121,7 +130,10 @@ app.get('/api/users', async (req, res) => {
     const usersWithBalance = await Promise.all(
       result.rows.map(async (user) => {
         const loansResult = await pool.query(
-          'SELECT amount, paid_amount FROM loans WHERE member_email = $1 AND status = $2',
+          `SELECT l.type, l.amount, l.paid_amount, l.quantity, l.product_id, p.price_per_unit 
+           FROM loans l 
+           LEFT JOIN products p ON l.product_id = p.id 
+           WHERE l.member_email = $1 AND l.status = $2`,
           [user.email, 'approved']
         );
         
@@ -129,7 +141,12 @@ app.get('/api/users', async (req, res) => {
         let totalLoaned = 0;
         let totalPaid = 0;
         loansResult.rows.forEach(loan => {
-          totalLoaned += parseFloat(loan.amount) || 0;
+          let loanAmount = loan.amount || 0;
+          // For seed loans, calculate amount from quantity * price_per_unit
+          if (loan.type === 'seeds' && loan.quantity && loan.price_per_unit) {
+            loanAmount = loan.quantity * loan.price_per_unit;
+          }
+          totalLoaned += parseFloat(loanAmount) || 0;
           totalPaid += parseFloat(loan.paid_amount) || 0;
         });
         

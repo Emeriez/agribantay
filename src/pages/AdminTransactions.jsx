@@ -101,7 +101,7 @@ export default function AdminTransactions() {
     return matchSearch && matchMember && matchProduct && matchType && matchFrom && matchTo;
   });
 
-  // Group capital loan transactions
+  // Group capital and seeds loan transactions
   const groupedTransactions = () => {
     const groups = [];
     const usedIndices = new Set();
@@ -109,13 +109,14 @@ export default function AdminTransactions() {
     filtered.forEach((tx, idx) => {
       if (usedIndices.has(idx)) return;
 
-      if (tx.type === "Capital Loan Approved") {
-        const groupId = `${tx.member_email}-${tx.amount}`;
+      if (tx.type === "Capital Loan Approved" || tx.type === "Seeds Loan Approved") {
+        const paymentType = tx.type === "Capital Loan Approved" ? "Capital Loan Payment" : "Seeds Loan Payment";
+        const groupId = `${tx.type}-${tx.member_email}-${tx.amount}`;
         
         // Find corresponding payment transaction
         const paymentTx = filtered.find((t, i) => 
           !usedIndices.has(i) &&
-          t.type === "Capital Loan Payment" &&
+          t.type === paymentType &&
           t.member_email === tx.member_email &&
           t.amount === tx.amount
         );
@@ -135,7 +136,7 @@ export default function AdminTransactions() {
         if (paymentTx) {
           usedIndices.add(filtered.indexOf(paymentTx));
         }
-      } else if (tx.type !== "Capital Loan Payment") {
+      } else if (tx.type !== "Capital Loan Payment" && tx.type !== "Seeds Loan Payment") {
         groups.push({
           type: "single",
           transaction: tx,
