@@ -10,7 +10,7 @@ dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = parseInt(process.env.PORT || '5000', 10);
 
 // Middleware
 app.use(cors());
@@ -271,7 +271,7 @@ app.get('/api/products/filter', async (req, res) => {
 
     if (req.query.product_id) {
       query += ' WHERE id = $1';
-      params.push(parseInt(req.query.product_id));
+      params.push(parseInt(String(req.query.product_id), 10));
     }
 
     const result = await pool.query(query, params);
@@ -288,7 +288,7 @@ app.get('/api/events', async (req, res) => {
     const pool = getPool();
     let query = 'SELECT * FROM events';
     const order = req.query.order;
-    const limit = req.query.limit ? parseInt(req.query.limit) : null;
+    const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : null;
 
     if (order === '-event_date') {
       query += ' ORDER BY event_date DESC';
@@ -353,7 +353,7 @@ app.get('/api/loans', async (req, res) => {
     const pool = getPool();
     let query = 'SELECT * FROM loans';
     const order = req.query.order;
-    const limit = req.query.limit ? parseInt(req.query.limit) : null;
+    const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : null;
 
     if (order === '-created_date') {
       query += ' ORDER BY created_date DESC';
@@ -592,7 +592,7 @@ app.get('/api/transactions', async (req, res) => {
     const pool = getPool();
     let query = 'SELECT * FROM transactions';
     const order = req.query.order;
-    const limit = req.query.limit ? parseInt(req.query.limit) : null;
+    const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : null;
 
     if (order === '-created_date') {
       query += ' ORDER BY created_date DESC';
