@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { api } from "@/api/apiClient";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Users, Package, FileText, CalendarDays } from "lucide-react";
+import { Users, Package, FileText, CalendarDays, RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import StatCard from "../components/admin/StatCard";
 import EventCard from "../components/admin/EventCard";
 
@@ -16,6 +17,7 @@ export default function AdminDashboard() {
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [authChecking, setAuthChecking] = useState(true);
+  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
     checkAuthAndLoad();
@@ -80,6 +82,25 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
+  const handleReset = async () => {
+    if (!confirm('⚠️ This will clear ALL data (loans, transactions, users, products) and reset to demo data. Continue?')) {
+      return;
+    }
+    
+    setResetting(true);
+    try {
+      const response = await fetch('/api/admin/seed', { method: 'POST' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      alert('✅ Database reset successfully! Reloading...');
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+      console.error('Reset error:', error);
+      alert(`❌ Reset failed: ${error.message}`);
+      setResetting(false);
+    }
+  };
+
   // Show blank screen during auth checking to prevent showing stale member dashboard content
   if (authChecking) {
     return (
@@ -111,9 +132,20 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900">
       <div className="p-6 lg:p-10 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 via-emerald-300 to-cyan-400 bg-clip-text text-transparent mb-2">Dashboard</h1>
-          <p className="text-slate-400">Welcome back, {user?.full_name?.split(" ")[0] || "Admin"}</p>
+        <div className="mb-12 flex items-start justify-between">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 via-emerald-300 to-cyan-400 bg-clip-text text-transparent mb-2">Dashboard</h1>
+            <p className="text-slate-400">Welcome back, {user?.full_name?.split(" ")[0] || "Admin"}</p>
+          </div>
+          <Button
+            onClick={handleReset}
+            disabled={resetting}
+            variant="outline"
+            className="text-xs border-slate-600 text-slate-400 hover:text-red-400 hover:border-red-400/50"
+          >
+            <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+            {resetting ? "Resetting..." : "Reset for Pilot"}
+          </Button>
         </div>
 
         {/* Stats */}
