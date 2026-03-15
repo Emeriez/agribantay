@@ -498,7 +498,15 @@ app.put('/api/loans/:id', async (req, res) => {
     if (oldStatus !== status && (status === 'approved' || status === 'declined')) {
       const loanTypeLabel = updatedLoan.type === 'seeds' ? 'Seeds' : 'Capital';
       const transactionType = status === 'approved' ? `${loanTypeLabel} Loan Approved` : `${loanTypeLabel} Loan Declined`;
-      const amount = updatedLoan.amount || 0;
+      
+      // Calculate amount for seed loans (quantity * price_per_unit)
+      let amount = updatedLoan.amount || 0;
+      if (updatedLoan.type === 'seeds' && updatedLoan.quantity && updatedLoan.product_id) {
+        const productResult = await pool.query('SELECT price_per_unit FROM products WHERE id = $1', [updatedLoan.product_id]);
+        if (productResult.rows.length > 0) {
+          amount = updatedLoan.quantity * productResult.rows[0].price_per_unit;
+        }
+      }
 
       await pool.query(
         'INSERT INTO transactions (member_email, member_name, type, amount, product_name, product_id, description, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
