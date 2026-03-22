@@ -130,6 +130,8 @@ const seedInitialData = async () => {
     // Insert users
     const users = [
       { email: 'admin@example.com', password: adminPasswordHash, name: 'Admin User', full_name: 'Admin User', role: 'admin' },
+      { email: 'admin2@example.com', password: adminPasswordHash, name: 'Admin 2', full_name: 'Admin User 2', role: 'admin' },
+      { email: 'admin3@example.com', password: adminPasswordHash, name: 'Admin 3', full_name: 'Admin User 3', role: 'admin' },
       { email: 'member1@example.com', password: memberPasswordHash, name: 'Member 1', full_name: 'Member One', role: 'member' },
       { email: 'member2@example.com', password: memberPasswordHash, name: 'Member 2', full_name: 'Member Two', role: 'member' },
       { email: 'member3@example.com', password: memberPasswordHash, name: 'Member 3', full_name: 'Member Three', role: 'member' }

@@ -197,8 +197,16 @@ export default function Landing() {
             </p>
             <div className="space-y-2 text-xs text-emerald-300/50">
               <div className="flex justify-between">
-                <span>Admin:</span>
+                <span>Admin 1:</span>
                 <span className="font-mono">admin@example.com / admin123</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Admin 2:</span>
+                <span className="font-mono">admin2@example.com / admin123</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Admin 3:</span>
+                <span className="font-mono">admin3@example.com / admin123</span>
               </div>
               <div className="flex justify-between">
                 <span>Member 1:</span>
