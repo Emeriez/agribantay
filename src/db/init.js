@@ -104,6 +104,19 @@ export const initializeDatabase = async () => {
     } catch (migrationError) {
       console.warn('⚠️ Foreign key migration warning (may be normal):', migrationError.message);
     }
+
+    // Fix transactions foreign key to SET NULL on product deletion (orphan transactions)
+    try {
+      await pool.query(`
+        ALTER TABLE transactions 
+        DROP CONSTRAINT IF EXISTS transactions_product_id_fkey,
+        ADD CONSTRAINT transactions_product_id_fkey 
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL;
+      `);
+      console.log('✅ Transactions foreign key updated to orphan on product deletion');
+    } catch (migrationError) {
+      console.warn('⚠️ Transactions FK migration warning (may be normal):', migrationError.message);
+    }
     
     // Seed initial data if tables are empty
     const userCount = await pool.query('SELECT COUNT(*) FROM users');

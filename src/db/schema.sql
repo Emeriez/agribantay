@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS transactions (
   created_date DATE NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (product_id) REFERENCES products(id)
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
 );
 
 -- Create indexes for better query performance
