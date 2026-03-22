@@ -277,13 +277,7 @@ app.delete('/api/products/:id', async (req, res) => {
 
     const product = productResult.rows[0];
 
-    // Delete the product
-    await pool.query(
-      'DELETE FROM products WHERE id = $1',
-      [productId]
-    );
-
-    // Create transaction record for product removal
+    // Create transaction record for product removal BEFORE deleting
     await pool.query(
       'INSERT INTO transactions (member_email, member_name, type, amount, product_name, product_id, description, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
       [
@@ -296,6 +290,12 @@ app.delete('/api/products/:id', async (req, res) => {
         reason || 'Product removed from inventory',
         new Date().toISOString().split('T')[0]
       ]
+    );
+
+    // Delete the product
+    await pool.query(
+      'DELETE FROM products WHERE id = $1',
+      [productId]
     );
 
     console.log(`✅ Product deleted: ${product.name} (ID: ${productId})`);
