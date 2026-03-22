@@ -84,6 +84,7 @@ export const initializeDatabase = async () => {
       await pool.query(`
         ALTER TABLE transactions
         ADD COLUMN IF NOT EXISTS description TEXT,
+        ADD COLUMN IF NOT EXISTS processed_by_email VARCHAR(255),
         ALTER COLUMN member_name DROP NOT NULL;
       `);
       console.log('✅ Transactions table columns migrated');

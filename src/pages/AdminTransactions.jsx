@@ -262,6 +262,7 @@ export default function AdminTransactions() {
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Product</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Amount</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Date</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Processed By</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
@@ -300,6 +301,9 @@ export default function AdminTransactions() {
                           <td className="px-5 py-3.5 text-slate-400">
                             {item.parent.created_date ? format(new Date(item.parent.created_date), "MMM dd, yyyy") : "—"}
                           </td>
+                          <td className="px-5 py-3.5 text-slate-400">
+                            {item.parent.processed_by_email || "—"}
+                          </td>
                           <td className="px-5 py-3.5">
                             <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
                               item.isSettled 
@@ -325,6 +329,9 @@ export default function AdminTransactions() {
                             <td className="px-5 py-3.5 font-medium text-emerald-400">₱{(item.child.amount || 0).toLocaleString()}</td>
                             <td className="px-5 py-3.5 text-slate-500">
                               {item.child.created_date ? format(new Date(item.child.created_date), "MMM dd, yyyy") : "—"}
+                            </td>
+                            <td className="px-5 py-3.5 text-slate-400">
+                              {item.child.processed_by_email || "—"}
                             </td>
                             <td className="px-5 py-3.5">
                               <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-300">
@@ -357,6 +364,9 @@ export default function AdminTransactions() {
                         <td className="px-5 py-3.5 font-medium text-white">₱{(tx.amount || 0).toLocaleString()}</td>
                         <td className="px-5 py-3.5 text-slate-400">
                           {tx.created_date ? format(new Date(tx.created_date), "MMM dd, yyyy") : "—"}
+                        </td>
+                        <td className="px-5 py-3.5 text-slate-400">
+                          {tx.processed_by_email || "—"}
                         </td>
                         <td className="px-5 py-3.5">
                           <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${

@@ -22,6 +22,30 @@ app.use(express.static(path.join(__dirname, '../dist')));
 // Initialize database on startup
 await initializeDatabase();
 
+// Helper function to get admin email from Authorization header
+const getAdminEmailFromRequest = async (req) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return null;
+    }
+    const token = authHeader.split(' ')[1];
+    const userId = parseInt(token);
+    if (isNaN(userId)) {
+      return null;
+    }
+    const pool = getPool();
+    const result = await pool.query(
+      'SELECT email FROM users WHERE id = $1',
+      [userId]
+    );
+    return result.rows.length > 0 ? result.rows[0].email : null;
+  } catch (error) {
+    console.error('Error extracting admin email:', error);
+    return null;
+  }
+};
+
 // ===== AUTH ENDPOINTS =====
 app.post('/api/auth/login', async (req, res) => {
   try {
@@ -264,6 +288,9 @@ app.delete('/api/products/:id', async (req, res) => {
     const productId = parseInt(req.params.id);
     const { reason } = req.body;
     const pool = getPool();
+    
+    // Get admin email from auth header
+    const adminEmail = await getAdminEmailFromRequest(req);
 
     // Get product details before deletion
     const productResult = await pool.query(
@@ -279,7 +306,7 @@ app.delete('/api/products/:id', async (req, res) => {
 
     // Create transaction record for product removal BEFORE deleting
     await pool.query(
-      'INSERT INTO transactions (member_email, member_name, type, amount, product_name, product_id, description, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+      'INSERT INTO transactions (member_email, member_name, type, amount, product_name, product_id, description, processed_by_email, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
       [
         'admin@agribantay.com',
         'Admin',
@@ -288,6 +315,7 @@ app.delete('/api/products/:id', async (req, res) => {
         product.name,
         productId,
         reason || 'Product removed from inventory',
+        adminEmail,
         new Date().toISOString().split('T')[0]
       ]
     );
@@ -440,6 +468,9 @@ app.put('/api/loans/:id', async (req, res) => {
     const loanId = parseInt(req.params.id);
     const { status, pickup_date, decline_reason, deadline, paid_amount } = req.body;
     const pool = getPool();
+    
+    // Get admin email from auth header
+    const adminEmail = await getAdminEmailFromRequest(req);
 
     // Get the current loan
     const currentLoan = await pool.query('SELECT * FROM loans WHERE id = $1', [loanId]);
@@ -532,7 +563,7 @@ app.put('/api/loans/:id', async (req, res) => {
       const amount = updatedLoan.amount || 0;
 
       await pool.query(
-        'INSERT INTO transactions (member_email, member_name, type, amount, product_name, product_id, description, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        'INSERT INTO transactions (member_email, member_name, type, amount, product_name, product_id, description, processed_by_email, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
         [
           updatedLoan.member_email,
           updatedLoan.member_name,
@@ -541,6 +572,7 @@ app.put('/api/loans/:id', async (req, res) => {
           updatedLoan.product_name || null,
           updatedLoan.product_id || null,
           `${transactionType}: ${updatedLoan.type === 'seeds' ? updatedLoan.product_name : 'Capital Loan'}`,
+          adminEmail,
           new Date().toISOString().split('T')[0]
         ]
       );
@@ -554,7 +586,7 @@ app.put('/api/loans/:id', async (req, res) => {
       const transactionType = `${loanTypeLabel} Loan Payment`;
       
       await pool.query(
-        'INSERT INTO transactions (member_email, member_name, type, amount, product_name, product_id, description, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        'INSERT INTO transactions (member_email, member_name, type, amount, product_name, product_id, description, processed_by_email, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
         [
           updatedLoan.member_email,
           updatedLoan.member_name,
@@ -563,6 +595,7 @@ app.put('/api/loans/:id', async (req, res) => {
           updatedLoan.product_name || null,
           updatedLoan.product_id || null,
           `${transactionType}: ₱${paid_amount} paid for ${updatedLoan.type === 'seeds' ? updatedLoan.product_name : 'Capital Loan'}`,
+          adminEmail,
           new Date().toISOString().split('T')[0]
         ]
       );
@@ -610,6 +643,9 @@ app.post('/api/loans/:id/mark-paid', async (req, res) => {
     const loanId = parseInt(req.params.id);
     const { paid_amount } = req.body; // Amount paid this time
     const pool = getPool();
+    
+    // Get admin email from auth header
+    const adminEmail = await getAdminEmailFromRequest(req);
 
     // Get the current loan
     const currentLoan = await pool.query('SELECT * FROM loans WHERE id = $1', [loanId]);
@@ -642,7 +678,7 @@ app.post('/api/loans/:id/mark-paid', async (req, res) => {
     // Create transaction for the payment
     const loanTypeLabel = loan.type === 'seeds' ? 'Seeds' : 'Capital';
     await pool.query(
-      'INSERT INTO transactions (member_email, member_name, type, amount, product_name, description, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+      'INSERT INTO transactions (member_email, member_name, type, amount, product_name, description, processed_by_email, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
       [
         loan.member_email,
         loan.member_name,
@@ -650,6 +686,7 @@ app.post('/api/loans/:id/mark-paid', async (req, res) => {
         paid_amount,
         loan.product_name || null,
         `Payment for ${loan.type === 'seeds' ? loan.product_name : 'Capital'} Loan (ID: ${loanId})`,
+        adminEmail,
         new Date().toISOString().split('T')[0]
       ]
     );
