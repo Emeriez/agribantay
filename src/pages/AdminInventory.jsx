@@ -117,16 +117,27 @@ export default function AdminInventory() {
 
     setSaving(true);
     try {
+      // Calculate monetary value
+      const totalValue = (adjustDialog.quantity * adjustDialog.product.price_per_unit) || 0;
+      
+      // Build description with quantity and value
+      const quantityStr = `${adjustDialog.quantity}${adjustDialog.product.unit}`;
+      const descriptionParts = [`Removed ${quantityStr} (₱${totalValue.toFixed(2)})`];
+      if (adjustDialog.reason) {
+        descriptionParts.push(`Reason: ${adjustDialog.reason}`);
+      }
+      const fullDescription = descriptionParts.join(". ");
+
       // Create transaction log entry
       await api.entities.Transaction.create({
         type: "Inventory Adjustment",
-        amount: adjustDialog.quantity,
+        amount: totalValue,
         product_name: adjustDialog.product.name,
         product_id: adjustDialog.product.id,
         member_name: user.name,
         member_email: user.email,
         processed_by_email: user.email,
-        description: adjustDialog.reason || "Inventory adjustment",
+        description: fullDescription,
         created_date: new Date().toISOString().split('T')[0]
       });
 
@@ -144,7 +155,7 @@ export default function AdminInventory() {
       );
 
       setAdjustDialog({ open: false, product: null, quantity: 0, reason: "" });
-      alert(`Successfully removed ${adjustDialog.quantity}${adjustDialog.product.unit} from ${adjustDialog.product.name}`);
+      alert(`Successfully removed ${quantityStr} from ${adjustDialog.product.name} (Total: ₱${totalValue.toFixed(2)})`);
     } catch (error) {
       console.error('Failed to adjust inventory:', error);
       alert('Failed to adjust inventory. Please try again.');

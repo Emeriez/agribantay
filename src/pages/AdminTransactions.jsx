@@ -362,7 +362,14 @@ export default function AdminTransactions() {
                             {tx.type?.replace("_", " ")}
                           </span>
                         </td>
-                        <td className="px-5 py-3.5 text-slate-300">{tx.product_name || "—"}</td>
+                        <td className="px-5 py-3.5">
+                          <div>
+                            <div className="text-slate-300">{tx.product_name || "—"}</div>
+                            {tx.type === "Inventory Adjustment" && tx.description && (
+                              <div className="text-[11px] text-slate-400 mt-1">{tx.description}</div>
+                            )}
+                          </div>
+                        </td>
                         <td className="px-5 py-3.5 font-medium text-white">₱{(tx.amount || 0).toLocaleString()}</td>
                         <td className="px-5 py-3.5 text-slate-400">
                           {tx.created_date ? format(new Date(tx.created_date), "MMM dd, yyyy") : "—"}
