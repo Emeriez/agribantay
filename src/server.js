@@ -749,15 +749,16 @@ app.get('/api/transactions', async (req, res) => {
 
 app.post('/api/transactions', async (req, res) => {
   try {
-    const { amount, type, member_name, member_email, product_name, product_id } = req.body;
+    const { amount, type, member_name, member_email, product_name, product_id, description, processed_by_email } = req.body;
     const created_date = new Date().toISOString().split('T')[0];
     const pool = getPool();
 
     const result = await pool.query(
-      'INSERT INTO transactions (amount, type, member_name, member_email, product_name, product_id, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-      [amount, type, member_name, member_email, product_name, product_id, created_date]
+      'INSERT INTO transactions (amount, type, member_name, member_email, product_name, product_id, description, processed_by_email, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+      [amount, type, member_name, member_email, product_name, product_id, description, processed_by_email, created_date]
     );
 
+    console.log('✅ Transaction created:', result.rows[0]);
     res.json(result.rows[0]);
   } catch (error) {
     console.error('❌ Create transaction error:', error);

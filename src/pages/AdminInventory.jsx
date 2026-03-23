@@ -47,6 +47,7 @@ export default function AdminInventory() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [saving, setSaving] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, product: null, reason: "" });
+  const [adjustDialog, setAdjustDialog] = useState({ open: false, product: null, quantity: 0, reason: "" });
 
   useEffect(() => {
     checkAuthAndLoad();
@@ -104,18 +105,52 @@ export default function AdminInventory() {
     loadProducts();
   };
 
-  const openEdit = (product) => {
-    setEditingProduct(product);
-    setForm({
-      name: product.name,
-      description: product.description || "",
-      category: product.category || "seeds",
-      quantity: product.quantity,
-      unit: product.unit,
-      price_per_unit: product.price_per_unit || 0,
-      image_url: product.image_url || "",
-    });
-    setShowForm(true);
+  const openAdjust = (product) => {
+    setAdjustDialog({ open: true, product, quantity: 0, reason: "" });
+  };
+
+  const handleAdjustQuantity = async () => {
+    if (!adjustDialog.product || adjustDialog.quantity <= 0) {
+      alert("Please enter a valid quantity to remove");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // Create transaction log entry
+      await api.entities.Transaction.create({
+        type: "Inventory Adjustment",
+        amount: adjustDialog.quantity,
+        product_name: adjustDialog.product.name,
+        product_id: adjustDialog.product.id,
+        member_name: user.name,
+        member_email: user.email,
+        processed_by_email: user.email,
+        description: adjustDialog.reason || "Inventory adjustment",
+        created_date: new Date().toISOString().split('T')[0]
+      });
+
+      // Update product quantity (subtract)
+      const newQuantity = Math.max(0, adjustDialog.product.quantity - adjustDialog.quantity);
+      await api.entities.Product.update(adjustDialog.product.id, {
+        quantity: newQuantity
+      });
+
+      // Update local state
+      setProducts((prev) =>
+        prev.map((p) => 
+          p.id === adjustDialog.product.id ? { ...p, quantity: newQuantity } : p
+        )
+      );
+
+      setAdjustDialog({ open: false, product: null, quantity: 0, reason: "" });
+      alert(`Successfully removed ${adjustDialog.quantity}${adjustDialog.product.unit} from ${adjustDialog.product.name}`);
+    } catch (error) {
+      console.error('Failed to adjust inventory:', error);
+      alert('Failed to adjust inventory. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const filtered = products.filter(
@@ -184,9 +219,10 @@ export default function AdminInventory() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      openEdit(product);
+                      openAdjust(product);
                     }}
                     className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-emerald-300"
+                    title="Adjust inventory"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
@@ -307,6 +343,57 @@ export default function AdminInventory() {
           setSelectedProduct(null);
         }}
       />
+
+      {/* Inventory Adjustment Dialog */}
+      <Dialog open={adjustDialog.open} onOpenChange={(open) => !open && setAdjustDialog({ open: false, product: null, quantity: 0, reason: "" })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adjust Inventory</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600">
+              Adjusting inventory for <strong>{adjustDialog.product?.name}</strong>
+            </p>
+            <p className="text-sm text-slate-500">
+              Current quantity: <strong className="text-emerald-400">{adjustDialog.product?.quantity} {adjustDialog.product?.unit}</strong>
+            </p>
+            <div>
+              <Label>Quantity to Remove</Label>
+              <Input 
+                type="number" 
+                min="0"
+                step="0.01"
+                value={adjustDialog.quantity} 
+                onChange={(e) => setAdjustDialog({ ...adjustDialog, quantity: Number(e.target.value) })} 
+                placeholder="Enter quantity to remove"
+                className="bg-slate-800 border-slate-700 text-white"
+              />
+            </div>
+            <div>
+              <Label>Reason for Adjustment (Optional)</Label>
+              <Textarea 
+                value={adjustDialog.reason} 
+                onChange={(e) => setAdjustDialog({ ...adjustDialog, reason: e.target.value })} 
+                placeholder="e.g., Damaged, Expired, Quality control, Stock count discrepancy..."
+                className="h-24 bg-slate-800 border-slate-700 text-white"
+              />
+            </div>
+            <p className="text-xs text-slate-500">
+              New quantity will be: <strong className="text-cyan-400">{Math.max(0, (adjustDialog.product?.quantity || 0) - adjustDialog.quantity)} {adjustDialog.product?.unit}</strong>
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAdjustDialog({ open: false, product: null, quantity: 0, reason: "" })}>Cancel</Button>
+            <Button 
+              onClick={handleAdjustQuantity} 
+              disabled={saving || adjustDialog.quantity <= 0} 
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              {saving ? "Adjusting..." : "Confirm Adjustment"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
     </div>
     </PullToRefresh>

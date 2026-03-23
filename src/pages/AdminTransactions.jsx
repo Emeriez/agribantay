@@ -166,6 +166,7 @@ export default function AdminTransactions() {
     "Seeds Loan Approved": "bg-emerald-500/30 text-emerald-300",
     "Seeds Loan Declined": "bg-red-500/30 text-red-300",
     "Seeds Loan Payment": "bg-green-500/30 text-green-300",
+    "Inventory Adjustment": "bg-violet-500/30 text-violet-300",
     seeds_loan: "bg-emerald-500/30 text-emerald-300",
     capital_loan: "bg-blue-500/30 text-blue-300",
     payment: "bg-purple-500/30 text-purple-300",
@@ -230,6 +231,7 @@ export default function AdminTransactions() {
                 <SelectItem value="Seeds Loan Approved">Seeds Loan Approved</SelectItem>
                 <SelectItem value="Seeds Loan Declined">Seeds Loan Declined</SelectItem>
                 <SelectItem value="Seeds Loan Payment">Seeds Loan Payment</SelectItem>
+                <SelectItem value="Inventory Adjustment">Inventory Adjustment</SelectItem>
                 <SelectItem value="payment">Payment</SelectItem>
                 <SelectItem value="return">Return</SelectItem>
               </SelectContent>
